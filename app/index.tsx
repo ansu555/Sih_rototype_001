@@ -56,7 +56,7 @@ export default function LoginScreen() {
     // Simulate network/auth (e.g., 800ms) then navigate
     setTimeout(() => {
       setLoading(false);
-  router.replace('dashboard');
+  router.replace('/dashboard');
     }, 800);
   };
 

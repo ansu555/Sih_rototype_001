@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, Text, Platform } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View, TextInput, TouchableOpacity, Text, Platform, Animated, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
@@ -41,10 +42,22 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [secure, setSecure] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const fade = useRef(new Animated.Value(0)).current;
+  const router = useRouter();
+
+  useEffect(() => {
+    Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+  }, [fade]);
 
   const onLogin = () => {
-    // Placeholder auth action
-    console.log('Attempt login', { username });
+    if (loading) return;
+    setLoading(true);
+    // Simulate network/auth (e.g., 800ms) then navigate
+    setTimeout(() => {
+      setLoading(false);
+  router.replace('dashboard');
+    }, 800);
   };
 
   return (
@@ -58,6 +71,7 @@ export default function LoginScreen() {
       <WaveBackground />
       <GovBadge />
       <View style={styles.centerWrapper}>
+        <Animated.View style={[styles.fadeWrap, { opacity: fade }]}>        
         <BlurView intensity={50} tint="light" style={styles.card} experimentalBlurMethod="dimezisBlurView">
           <View style={styles.cardInner}>
             <Text style={styles.title}>DWLR Groundwater Monitoring</Text>
@@ -95,11 +109,23 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-            <TouchableOpacity style={styles.loginButton} onPress={onLogin} accessibilityRole="button">
-              <Text style={styles.loginButtonText}>Login</Text>
+            <TouchableOpacity style={[styles.loginButton, loading && styles.loginButtonDisabled]} onPress={onLogin} accessibilityRole="button" disabled={loading}>
+              {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.loginButtonText}>Login</Text>}
             </TouchableOpacity>
+            <View style={styles.secondaryRow}>
+              <TouchableOpacity accessibilityRole="button" style={styles.secondaryLeft}>
+                <Text style={styles.linkText}>Forgot Password?</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.chip} accessibilityRole="button">
+                <Text style={styles.chipText}>MeriPehchaan Login</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </BlurView>
+        </Animated.View>
+      </View>
+      <View style={styles.footer}> 
+        <Text style={styles.footerText}>Powered by SIH 2025 • Team Indrion </Text>
       </View>
     </View>
   );
@@ -118,6 +144,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.45)'
   },
   cardInner: { padding: 32, gap: 20 },
+  fadeWrap: { width: '100%', alignItems: 'center' },
   title: { fontSize: 24, fontWeight: '700', textAlign: 'center', color: '#0066CC', fontFamily: Platform.select({ default: undefined }) },
   fieldWrapper: { gap: 6 },
   label: { fontSize: 14, fontWeight: '600', color: '#005299' },
@@ -147,7 +174,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
   },
+  loginButtonDisabled: { opacity: 0.6 },
   loginButtonText: { color: 'white', fontWeight: '600', fontSize: 16, letterSpacing: 0.5 },
+  secondaryRow: { marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  secondaryLeft: {},
+  linkText: { fontSize: 14, color: '#0066CC', fontWeight: '600' },
+  chip: { alignSelf: 'flex-start', backgroundColor: 'rgba(0,102,204,0.08)', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(0,102,204,0.25)' },
+  chipText: { fontSize: 14, color: '#005299', fontWeight: '600' },
   badge: {
     position: 'absolute',
     top: 48,
@@ -161,4 +194,6 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 12, fontWeight: '700', color: '#004D99', letterSpacing: 1 },
   waveSvg: { position: 'absolute', top: 0, left: 0 },
+  footer: { position: 'absolute', bottom: 24, width: '100%', alignItems: 'center' },
+  footerText: { fontSize: 12, color: '#666666', letterSpacing: 0.5 },
 });

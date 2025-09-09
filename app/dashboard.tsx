@@ -1,18 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, ScrollView } from 'react-native';
 import GISMap from '@/components/GISMap';
-import { useRouter } from 'expo-router';
+import { useDashboard } from '@/hooks/useDashboard';
 
 export default function DashboardScreen() {
   const { width } = useWindowDimensions();
   const isWide = width >= 900; // breakpoint for two columns
-  const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const onLogout = () => {
-    // Clear auth state here (placeholder) then navigate
-    router.replace('/');
-  };
+  const { state: { menuOpen, stationData, metricData }, actions: { toggleMenu, onLogout } } = useDashboard();
 
   return (
     <View style={styles.page}>      
@@ -22,12 +16,12 @@ export default function DashboardScreen() {
           <Text style={styles.appTitle}>DWLR Monitoring</Text>
         </View>
         <View style={styles.navRight}>
-          <TouchableOpacity style={styles.avatar} onPress={() => setMenuOpen(o => !o)} accessibilityRole="button" accessibilityLabel="User menu">
+      <TouchableOpacity style={styles.avatar} onPress={toggleMenu} accessibilityRole="button" accessibilityLabel="User menu">
             <Text style={styles.avatarText}>AK</Text>
           </TouchableOpacity>
           {menuOpen && (
             <View style={styles.dropdown}>
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setMenuOpen(false); /* future settings route */ }}>
+        <TouchableOpacity style={styles.dropdownItem} onPress={() => { /* future settings route */ }}>
                 <Text style={styles.dropdownText}>Settings</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.dropdownItem} onPress={onLogout}>
@@ -41,14 +35,13 @@ export default function DashboardScreen() {
         <View style={[styles.contentWrapper, !isWide && styles.contentStack]}>        
           <View style={[styles.column, styles.leftCol]}> 
             <PlaceholderPanel title="Spatial Distribution (GIS)">
-              <GISMap stations={sampleStations} height={isWide ? 380 : 260} />
+              <GISMap stations={stationData} />
             </PlaceholderPanel>
             <Text style={styles.sectionTitle}>Key Metrics</Text>
             <View style={styles.metricGrid}>
-              <MetricCard label="Active Sensors" value="128" trend="+4" />
-              <MetricCard label="Avg Depth (m)" value="23.4" trend="-0.6" />
-              <MetricCard label="Alerts" value="5" trend="+2" highlight />
-              <MetricCard label="Recharge Sites" value="42" trend="+1" />
+              {metricData.map(m => (
+                <MetricCard key={m.key} label={m.label} value={m.value} trend={m.trend} highlight={m.highlight} />
+              ))}
             </View>
             <PlaceholderPanel title="Trend Analysis (30d)">
               <Text style={styles.placeholderText}>[Chart placeholder]</Text>
@@ -90,13 +83,7 @@ function PlaceholderPanel({ title, children }: { title: string; children: React.
   );
 }
 
-// Sample station data (mock). Replace with API integration.
-const sampleStations = [
-  { id: 'S1', name: 'Station A', latitude: 19.07, longitude: 72.87, depthMeters: 5.2, status: 'safe' as const },
-  { id: 'S2', name: 'Station B', latitude: 19.17, longitude: 72.99, depthMeters: 12.4, status: 'semi-critical' as const },
-  { id: 'S3', name: 'Station C', latitude: 18.98, longitude: 72.81, depthMeters: 27.8, status: 'critical' as const },
-  { id: 'S4', name: 'Station D', latitude: 19.12, longitude: 73.05, depthMeters: 9.1, status: 'safe' as const },
-];
+// Data moved to hooks & data modules.
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#F5F5F5' },

@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, Text, Platform, Animated, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import { useLogin } from '@/hooks/useLogin';
 
 // Simple minimalist gov badge placeholder (can be replaced with actual asset)
 function GovBadge() {
@@ -39,26 +39,7 @@ function WaveBackground() {
 }
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [secure, setSecure] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const fade = useRef(new Animated.Value(0)).current;
-  const router = useRouter();
-
-  useEffect(() => {
-    Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-  }, [fade]);
-
-  const onLogin = () => {
-    if (loading) return;
-    setLoading(true);
-    // Simulate network/auth (e.g., 800ms) then navigate
-    setTimeout(() => {
-      setLoading(false);
-  router.replace('/dashboard');
-    }, 800);
-  };
+  const { state: { username, password, secure, loading, fade }, actions: { setUsername, setPassword, toggleSecure, onLogin } } = useLogin();
 
   return (
     <View style={styles.container}>
@@ -101,7 +82,7 @@ export default function LoginScreen() {
                 />
                 <TouchableOpacity
                   style={styles.eyeButton}
-                  onPress={() => setSecure(s => !s)}
+                  onPress={toggleSecure}
                   accessibilityRole="button"
                   accessibilityLabel={secure ? 'Show password' : 'Hide password'}
                 >

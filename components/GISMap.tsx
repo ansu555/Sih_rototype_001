@@ -1,8 +1,7 @@
 import React, { useRef } from 'react';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polygon } from 'react-native-maps';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-
-export type StationStatus = 'safe' | 'semi-critical' | 'critical';
+import { WEST_BENGAL_POLYGONS } from '../data/westBengalGeo';
 
 interface Station {
   id: string;
@@ -10,23 +9,26 @@ interface Station {
   latitude: number;
   longitude: number;
   depthMeters: number;
-  status: StationStatus;
 }
 
-const STATUS_COLOR: Record<StationStatus, string> = {
-  safe: '#1B8F2A',
-  'semi-critical': '#E2A400',
-  critical: '#C62828',
-};
+const desaturatedStyle = [
+  { elementType: 'geometry', stylers: [{ saturation: -100 }, { lightness: 10 }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', stylers: [{ saturation: -100 }, { lightness: 40 }] },
+  { featureType: 'water', stylers: [{ color: '#b3cde0' }] },
+];
 
 export default function GISMap({ stations, height = 260 }: { stations: Station[]; height?: number }) {
   const mapRef = useRef<MapView>(null);
 
+  // Override initial region to West Bengal for now
   const region = {
-    latitude: stations[0]?.latitude || 20.5937,
-    longitude: stations[0]?.longitude || 78.9629,
-    latitudeDelta: 10,
-    longitudeDelta: 10,
+    latitude: 23.5,      // center of West Bengal
+    longitude: 87.3,
+    latitudeDelta: 5,
+    longitudeDelta: 5,
   };
 
   const handleZoomIn = () => {
@@ -53,21 +55,26 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
         initialRegion={region}
         zoomEnabled={true}
         scrollEnabled={true}
+        customMapStyle={desaturatedStyle}
       >
+        {WEST_BENGAL_POLYGONS.map((poly, idx) => (
+            <Polygon
+            key={`wb-${idx}`}
+             coordinates={poly}
+             strokeColor="#004D99"
+             strokeWidth={2}
+             fillColor="rgba(0,77,153,0.18)"
+             zIndex={2}
+            />
+          ))}
         {stations.map(s => (
           <Marker key={s.id} coordinate={{ latitude: s.latitude, longitude: s.longitude }} title={s.name} description={`Depth: ${s.depthMeters} m`}>
-            <View style={[styles.marker, { backgroundColor: STATUS_COLOR[s.status] }]}> 
+            <View style={styles.marker}> 
               <Text style={styles.markerText}>{Math.round(s.depthMeters)}m</Text>
             </View>
           </Marker>
         ))}
       </MapView>
-      <View style={styles.legend} pointerEvents="none">
-        <Text style={styles.legendTitle}>Status</Text>
-        <View style={styles.legendRow}><View style={[styles.legendDot,{backgroundColor:STATUS_COLOR.safe}]} /><Text style={styles.legendLabel}>Safe</Text></View>
-        <View style={styles.legendRow}><View style={[styles.legendDot,{backgroundColor:STATUS_COLOR['semi-critical']}]} /><Text style={styles.legendLabel}>Semi-Critical</Text></View>
-        <View style={styles.legendRow}><View style={[styles.legendDot,{backgroundColor:STATUS_COLOR.critical}]} /><Text style={styles.legendLabel}>Critical</Text></View>
-      </View>
       <View style={styles.zoomControls}>
         <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
           <Text style={styles.zoomButtonText}>+</Text>
@@ -82,13 +89,8 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
 
 const styles = StyleSheet.create({
   wrapper: { borderRadius: 16, overflow: 'hidden', backgroundColor: '#DDE3E8' },
-  marker: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  marker: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: '#004D99' },
   markerText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  legend: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255,255,255,0.9)', padding: 8, borderRadius: 12, gap: 4 },
-  legendTitle: { fontSize: 11, fontWeight: '700', color: '#004D99' },
-  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendLabel: { fontSize: 11, color: '#334A59' },
   zoomControls: { position: 'absolute', bottom: 16, right: 8, gap: 8 },
   zoomButton: { width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
   zoomButtonText: { fontSize: 20, fontWeight: 'bold', color: '#004D99' },

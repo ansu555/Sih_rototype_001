@@ -1,5 +1,5 @@
 import React from 'react';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import { View, Text, StyleSheet } from 'react-native';
 
 export type StationStatus = 'safe' | 'semi-critical' | 'critical';
@@ -29,7 +29,7 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
 
   return (
     <View style={[styles.wrapper, { height }] }>
-      <MapView style={StyleSheet.absoluteFill} initialRegion={region} provider={PROVIDER_GOOGLE}>
+      <MapView style={StyleSheet.absoluteFill} initialRegion={region}>
         {stations.map(s => (
           <Marker key={s.id} coordinate={{ latitude: s.latitude, longitude: s.longitude }} title={s.name} description={`Depth: ${s.depthMeters} m`}>
             <View style={[styles.marker, { backgroundColor: STATUS_COLOR[s.status] }]}> 

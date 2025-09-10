@@ -16,13 +16,21 @@ export function useLogin() {
 
   const toggleSecure = useCallback(() => setSecure(s => !s), []);
 
-  const onLogin = useCallback(() => {
+  const onLogin = useCallback(async () => {
     if (loading) return;
     setLoading(true);
-    setTimeout(() => {
+    
+    try {
+      // Simulate login process
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Use push instead of replace to ensure proper navigation
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
       setLoading(false);
-      router.replace('/dashboard');
-    }, 800);
+    }
   }, [loading, router]);
 
   return {

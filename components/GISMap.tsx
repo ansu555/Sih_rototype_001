@@ -104,7 +104,7 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
 }
 
 const styles = StyleSheet.create({
-  wrapper: { borderRadius: 16, overflow: 'hidden', backgroundColor: '#DDE3E8' },
+  wrapper: { borderRadius: 16, overflow: 'hidden', backgroundColor: '#DDE3E8', width: '100%', alignSelf: 'stretch' },
   marker: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: '#004D99' },
   markerText: { color: '#fff', fontSize: 11, fontWeight: '600' },
   zoomControls: { position: 'absolute', bottom: 16, right: 8, gap: 8 },

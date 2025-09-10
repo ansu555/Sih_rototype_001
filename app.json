@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "config": {
-        "googleMapsApiKey": "AIzaSyDc1U0ssPF_k-VfWQ3O8K7k9vf7klBVGOs"
+        "googleMapsApiKey": "$GOOGLE_MAPS_API_KEY"
       }
     },
     "android": {
@@ -22,7 +22,7 @@
       "edgeToEdgeEnabled": true,
       "config": {
         "googleMaps": {
-          "apiKey": ""
+          "apiKey": "$GOOGLE_MAPS_API_KEY"
         }
       }
     },

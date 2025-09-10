@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import MapView, { Marker, Polygon, PROVIDER_GOOGLE, MapType } from 'react-native-maps';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { WEST_BENGAL_POLYGONS } from '../data/westBengalGeo';
+import { INDIA_OUTLINE_POLYGONS } from '../data/indiaOutline';
 
 interface Station {
   id: string;
@@ -60,6 +61,16 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
         mapType={mapType}
         customMapStyle={mapType === 'standard' ? desaturatedStyle : undefined}
       >
+        {INDIA_OUTLINE_POLYGONS.map((poly, idx) => (
+          <Polygon
+            key={`india-${idx}`}
+            coordinates={poly}
+            strokeColor="rgba(0,0,0,0.25)"
+            strokeWidth={1}
+            fillColor="rgba(0,0,0,0.03)"
+            zIndex={1}
+          />
+        ))}
         {WEST_BENGAL_POLYGONS.map((poly, idx) => (
             <Polygon
             key={`wb-${idx}`}

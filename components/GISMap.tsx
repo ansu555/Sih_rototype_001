@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
-import MapView, { Marker, Polygon, PROVIDER_GOOGLE, MapType } from 'react-native-maps';
+import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, MapType } from 'react-native-maps';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { WEST_BENGAL_POLYGONS } from '../data/westBengalGeo';
-import { INDIA_OUTLINE_POLYGONS } from '../data/indiaOutline';
+import { INDIA_OUTLINE_POLYGONS, INDIA_BORDER_POLYGONS } from '../data/indiaOutline';
+import { INTERNATIONAL_BORDER_LINES } from '../data/indiaInternationalBorder';
 
 interface Station {
   id: string;
@@ -21,7 +22,7 @@ const desaturatedStyle = [
   { featureType: 'water', stylers: [{ color: '#b3cde0' }] },
 ];
 
-export default function GISMap({ stations, height = 260 }: { stations: Station[]; height?: number }) {
+export default function GISMap({ stations, height = 320 }: { stations: Station[]; height?: number }) {
   const mapRef = useRef<MapView>(null);
   const [mapType, setMapType] = useState<MapType>('standard');
 
@@ -69,6 +70,25 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
             strokeWidth={1}
             fillColor="rgba(0,0,0,0.03)"
             zIndex={1}
+          />
+        ))}
+        {INDIA_BORDER_POLYGONS.slice(0,1).map((poly, idx) => (
+          <Polygon
+            key={`india-border-${idx}`}
+            coordinates={poly}
+            strokeColor="#222"
+            strokeWidth={2}
+            fillColor="transparent"
+            zIndex={1}
+          />
+        ))}
+        {INTERNATIONAL_BORDER_LINES.map(seg => (
+          <Polyline
+            key={seg.id}
+            coordinates={seg.coordinates}
+            strokeColor="#000"
+            strokeWidth={.5}
+            zIndex={3}
           />
         ))}
         {WEST_BENGAL_POLYGONS.map((poly, idx) => (

@@ -36,7 +36,7 @@ export default function DashboardScreen() {
         <View style={[styles.contentWrapper, !isWide && styles.contentStack]}>        
           <View style={[styles.column, styles.leftCol]}> 
             <PlaceholderPanel title="Spatial Distribution (GIS)">
-              <GISMap stations={stationData} />
+              <GISMap stations={stationData} height={isWide ? 420 : 360} />
             </PlaceholderPanel>
             <Text style={styles.sectionTitle}>Key Metrics</Text>
             <View style={styles.metricGrid}>

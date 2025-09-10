@@ -32,4 +32,17 @@ export const INDIA_OUTLINE_POLYGONS: LatLng[][] = (() => {
   }
 })();
 
+/**
+ * INDIA_BORDER_POLYGONS
+ * A coarse outer border built by selecting features tagged as mainland/outer
+ * (simplistic approach: we currently reuse the union of all outer rings; for
+ * production you'd run a dissolve topology server-side to avoid overlaps).
+ */
+export const INDIA_BORDER_POLYGONS: LatLng[][] = (() => {
+  // For now just reuse outline polygons; Map layer will style it with thicker stroke.
+  return INDIA_OUTLINE_POLYGONS;
+})();
+
+export { INDIA_BORDER_POLYGONS as INDIA_OUTER_BORDER }; // alias if needed
+
 export default INDIA_OUTLINE_POLYGONS;

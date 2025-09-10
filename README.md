@@ -48,3 +48,36 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## District Borders Data
+
+District features are loaded from `data/india-districts-2019-734.json` (currently empty). Populate with a GeoJSON FeatureCollection:
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "DISTRICT": "Bankura", "ST_NM": "West Bengal", "DISTRICT_ID": "WB-BANKURA" },
+      "geometry": { "type": "Polygon", "coordinates": [ [ [ 87.123, 23.456 ], [ 87.130, 23.460 ], [ 87.123, 23.456 ] ] ] }
+    }
+  ]
+}
+```
+
+Property key fallbacks:
+* District name: `DISTRICT`, `district`, or `NAME_2`
+* State name: `ST_NM` or `state`
+
+Guidelines:
+* Coordinates must be `[lng, lat]` (GeoJSON spec); loader converts.
+* Simplify huge polygons ahead of time (e.g., Douglas-Peucker).
+* Ensure rings are closed.
+
+Utilities:
+* `loadAllDistricts()` parse everything.
+* `loadWestBengalDistricts()` subset for West Bengal.
+* Context auto-refreshes on screen focus.
+
+If file is empty the UI shows helper messages instead of borders.

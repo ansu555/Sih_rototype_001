@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyDc1U0ssPF_k-VfWQ3O8K7k9vf7klBVGOs"
+      }
     },
     "android": {
       "adaptiveIcon": {

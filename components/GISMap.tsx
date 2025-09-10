@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import MapView, { Marker } from 'react-native-maps';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 export type StationStatus = 'safe' | 'semi-critical' | 'critical';
 
@@ -20,6 +20,8 @@ const STATUS_COLOR: Record<StationStatus, string> = {
 };
 
 export default function GISMap({ stations, height = 260 }: { stations: Station[]; height?: number }) {
+  const mapRef = useRef<MapView>(null);
+
   const region = {
     latitude: stations[0]?.latitude || 20.5937,
     longitude: stations[0]?.longitude || 78.9629,
@@ -27,9 +29,31 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
     longitudeDelta: 10,
   };
 
+  const handleZoomIn = () => {
+    mapRef.current?.animateToRegion({
+      ...region,
+      latitudeDelta: region.latitudeDelta * 0.5,
+      longitudeDelta: region.longitudeDelta * 0.5,
+    });
+  };
+
+  const handleZoomOut = () => {
+    mapRef.current?.animateToRegion({
+      ...region,
+      latitudeDelta: region.latitudeDelta * 2,
+      longitudeDelta: region.longitudeDelta * 2,
+    });
+  };
+
   return (
     <View style={[styles.wrapper, { height }] }>
-      <MapView style={StyleSheet.absoluteFill} initialRegion={region}>
+      <MapView 
+        ref={mapRef}
+        style={StyleSheet.absoluteFill} 
+        initialRegion={region}
+        zoomEnabled={true}
+        scrollEnabled={true}
+      >
         {stations.map(s => (
           <Marker key={s.id} coordinate={{ latitude: s.latitude, longitude: s.longitude }} title={s.name} description={`Depth: ${s.depthMeters} m`}>
             <View style={[styles.marker, { backgroundColor: STATUS_COLOR[s.status] }]}> 
@@ -44,6 +68,14 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
         <View style={styles.legendRow}><View style={[styles.legendDot,{backgroundColor:STATUS_COLOR['semi-critical']}]} /><Text style={styles.legendLabel}>Semi-Critical</Text></View>
         <View style={styles.legendRow}><View style={[styles.legendDot,{backgroundColor:STATUS_COLOR.critical}]} /><Text style={styles.legendLabel}>Critical</Text></View>
       </View>
+      <View style={styles.zoomControls}>
+        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
+          <Text style={styles.zoomButtonText}>+</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
+          <Text style={styles.zoomButtonText}>−</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -57,4 +89,7 @@ const styles = StyleSheet.create({
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendLabel: { fontSize: 11, color: '#334A59' },
+  zoomControls: { position: 'absolute', bottom: 16, right: 8, gap: 8 },
+  zoomButton: { width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
+  zoomButtonText: { fontSize: 20, fontWeight: 'bold', color: '#004D99' },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, ScrollView } from 'react-native';
 import GISMap from '@/components/GISMap';
+import TrendChart from '@/components/TrendChart';
 import { useDashboard } from '@/hooks/useDashboard';
 
 export default function DashboardScreen() {
@@ -44,7 +45,7 @@ export default function DashboardScreen() {
               ))}
             </View>
             <PlaceholderPanel title="Trend Analysis (30d)">
-              <Text style={styles.placeholderText}>[Chart placeholder]</Text>
+              <TrendChart />
             </PlaceholderPanel>
           </View>
           <View style={[styles.column, isWide ? styles.rightCol : null]}> 

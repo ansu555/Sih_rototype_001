@@ -39,6 +39,7 @@ export default ({ config }) => {
 
   return {
     ...config, // Spread the existing base app.json config
+     scheme: "prototype001", 
     android: updatedAndroidConfig,
     // ios: updatedIosConfig, // Uncomment if you add iOS configuration
   };

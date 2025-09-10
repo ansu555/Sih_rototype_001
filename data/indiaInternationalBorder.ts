@@ -12,7 +12,7 @@ export interface BorderSegment { id: string; coordinates: LatLng[] }
 
 export const INTERNATIONAL_BORDER_LINES: BorderSegment[] = (() => {
   try {
-    const india = require('./in.json');
+    const india = require('../assets/data/in.json');
     if (!india?.features) return [];
 
     // Collect all outer rings (including West Bengal) with numeric indexing.

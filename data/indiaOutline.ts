@@ -9,7 +9,7 @@ import type { LatLng } from './westBengalGeo';
  */
 export const INDIA_OUTLINE_POLYGONS: LatLng[][] = (() => {
   try {
-    const india = require('./in.json');
+    const india = require('../assets/data/in.json');
     if (!india?.features) return [];
     const result: LatLng[][] = [];
     for (const f of india.features) {

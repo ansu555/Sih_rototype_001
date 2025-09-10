@@ -18,7 +18,7 @@ export interface LatLng { latitude: number; longitude: number }
  */
 export const WEST_BENGAL_POLYGONS: LatLng[][] = (() => {
   try {
-    const india = require('./in.json');
+    const india = require('../assets/data/in.json');
     if (india && Array.isArray(india.features)) {
       const wb = india.features.find((f: any) =>
         f?.properties?.name === 'West Bengal'

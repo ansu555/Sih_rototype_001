@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 import { useEffect } from 'react'; // Import useEffect
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { DistrictSelectionProvider } from '@/contexts/DistrictSelectionContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -33,25 +34,27 @@ export default function RootLayout() {
   // }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack 
-        screenOptions={{ 
-          headerShown: false,
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen 
-          name="dashboard" 
-          options={{
+    <DistrictSelectionProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack 
+          screenOptions={{ 
+            headerShown: false,
             animation: 'slide_from_right',
-            gestureEnabled: false, // Prevent back gesture on dashboard
+            gestureEnabled: true,
           }}
-        />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="light" />
-    </ThemeProvider>
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen 
+            name="dashboard" 
+            options={{
+              animation: 'slide_from_right',
+              gestureEnabled: false, // Prevent back gesture on dashboard
+            }}
+          />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="light" />
+      </ThemeProvider>
+    </DistrictSelectionProvider>
   );
 }

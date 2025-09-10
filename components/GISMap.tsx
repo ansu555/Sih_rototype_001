@@ -5,6 +5,7 @@ import { WEST_BENGAL_POLYGONS } from '../data/westBengalGeo';
 import { WEST_BENGAL_DISTRICTS } from '../data/districts';
 import { INDIA_OUTLINE_POLYGONS, INDIA_BORDER_POLYGONS } from '../data/indiaOutline';
 import { INTERNATIONAL_BORDER_LINES } from '../data/indiaInternationalBorder';
+import { useDistrictSelection } from '../contexts/DistrictSelectionContext';
 
 interface Station {
   id: string;
@@ -33,6 +34,7 @@ interface GISMapProps {
 export default function GISMap({ stations, height = 320, fullscreen = false, onToggleFullscreen }: GISMapProps) {
   const mapRef = useRef<MapView>(null);
   const [mapType, setMapType] = useState<MapType>('standard');
+  const { selectedDistrictId, setSelectedDistrictId } = useDistrictSelection();
 
   // Override initial region to West Bengal for now
   const region = {
@@ -110,24 +112,24 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
             />
           ))}
         {/* District borders for West Bengal */}
-        {WEST_BENGAL_DISTRICTS.map(d => (
-          <Polygon
-            key={`district-${d.id}`}
-            coordinates={d.polygons[0] || []}
-            strokeColor="rgba(0,0,0,0.5)"
-            strokeWidth={1}
-            fillColor="transparent"
-            tappable={true}
-            onPress={() => {
-              console.log(`District clicked: ${d.name} (${d.id})`);
-              // You can add custom logic here like:
-              // - Show district info popup
-              // - Navigate to district details
-              // - Update selection state
-            }}
-            zIndex={3}
-          />
-        ))}
+        {WEST_BENGAL_DISTRICTS.map(d => {
+          const isSelected = selectedDistrictId === d.id;
+          return (
+            <Polygon
+              key={`district-${d.id}`}
+              coordinates={d.polygons[0] || []}
+              strokeColor={isSelected ? "#E0A100" : "rgba(0,0,0,0.5)"}
+              strokeWidth={isSelected ? 3 : 1}
+              fillColor={isSelected ? "rgba(255,193,7,0.25)" : "transparent"}
+              tappable={true}
+              onPress={() => {
+                console.log(`District clicked: ${d.name} (${d.id})`);
+                setSelectedDistrictId(isSelected ? null : d.id);
+              }}
+              zIndex={isSelected ? 4 : 3}
+            />
+          );
+        })}
         {stations.map(s => (
           <Marker key={s.id} coordinate={{ latitude: s.latitude, longitude: s.longitude }} title={s.name} description={`Depth: ${s.depthMeters} m`}>
             <View style={styles.marker}> 

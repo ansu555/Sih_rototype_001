@@ -11,7 +11,7 @@ export default function DashboardScreen() {
   const toggleMapFullscreen = () => setMapFullscreen(f => !f);
   // Aspect ratio height when not fullscreen (limit for very tall screens)
   const mapHeight = Math.min(Math.max(width * 0.55, 320), 540); // clamp between 320 and 540
-  const { state: { menuOpen, stationData, metricData }, actions: { toggleMenu, onLogout } } = useDashboard();
+  const { state: { menuOpen, stationData }, actions: { toggleMenu, onLogout } } = useDashboard();
 
   return (
     <View style={styles.page}>      
@@ -47,12 +47,6 @@ export default function DashboardScreen() {
               <PlaceholderPanel title="Spatial Distribution (GIS)">
                 <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />
               </PlaceholderPanel>
-              <Text style={styles.sectionTitle}>Key Metrics</Text>
-              <View style={styles.metricGrid}>
-                {metricData.map(m => (
-                  <MetricCard key={m.key} label={m.label} value={m.value} trend={m.trend} highlight={m.highlight} />
-                ))}
-              </View>
               <PlaceholderPanel title="Trend Analysis (30d)">
                 <TrendChart />
               </PlaceholderPanel>
@@ -71,16 +65,6 @@ export default function DashboardScreen() {
           </View>
         </ScrollView>
       )}
-    </View>
-  );
-}
-
-function MetricCard({ label, value, trend, highlight }: { label: string; value: string; trend: string; highlight?: boolean }) {
-  return (
-    <View style={[styles.metricCard, highlight && styles.metricCardHighlight]}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
-      <Text style={[styles.metricTrend, trend.startsWith('-') ? styles.trendDown : styles.trendUp]}>{trend}</Text>
     </View>
   );
 }
@@ -116,15 +100,6 @@ const styles = StyleSheet.create({
   column: { flex: 1, gap: 20 },
   leftCol: {},
   rightCol: { maxWidth: 420 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#003B73' },
-  metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  metricCard: { width: '47%', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E0E4E7', gap: 4 },
-  metricCardHighlight: { borderColor: '#FFB347', backgroundColor: '#FFF8F0' },
-  metricLabel: { fontSize: 12, fontWeight: '600', color: '#44627A', textTransform: 'uppercase', letterSpacing: 0.5 },
-  metricValue: { fontSize: 24, fontWeight: '700', color: '#004D99' },
-  metricTrend: { fontSize: 14, fontWeight: '600' },
-  trendUp: { color: '#1B8F2A' },
-  trendDown: { color: '#C62828' },
   panel: { backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#E0E4E7', padding: 18, gap: 12 },
   panelTitle: { fontSize: 15, fontWeight: '700', color: '#004D99' },
   panelBody: { minHeight: 80 },

@@ -5,10 +5,10 @@
 		"scheme": "prototype001",
 		"version": "1.0.0",
 		"orientation": "portrait",
-		"icon": "./app/assets/images/icon.png",
+		"icon": "./assets/images/icon.png",
 		"userInterfaceStyle": "automatic",
 		"splash": {
-			"image": "./app/assets/images/splash-icon.png",
+			"image": "./assets/images/splash-icon.png",
 			"resizeMode": "contain",
 			"backgroundColor": "#ffffff"
 		},
@@ -25,7 +25,7 @@
 		"android": {
 			"package": "com.prototype001.app",
 			"adaptiveIcon": {
-				"foregroundImage": "./app/assets/images/adaptive-icon.png",
+				"foregroundImage": "./assets/images/adaptive-icon.png",
 				"backgroundColor": "#ffffff"
 			},
 			"config": {
@@ -35,7 +35,7 @@
 			}
 		},
 		"web": {
-			"favicon": "./app/assets/images/favicon.png"
+			"favicon": "./assets/images/favicon.png"
 		},
 		"extra": {
 			"eas": {

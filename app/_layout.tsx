@@ -7,6 +7,7 @@ import { useEffect } from 'react'; // Import useEffect
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { DistrictSelectionProvider } from '@/contexts/DistrictSelectionContext';
+import { GroundwaterProvider } from '@/contexts/GroundwaterContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -34,27 +35,29 @@ export default function RootLayout() {
   // }
 
   return (
-    <DistrictSelectionProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack 
-          screenOptions={{ 
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen 
-            name="dashboard" 
-            options={{
+    <GroundwaterProvider>
+      <DistrictSelectionProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack 
+            screenOptions={{ 
+              headerShown: false,
               animation: 'slide_from_right',
-              gestureEnabled: false, // Prevent back gesture on dashboard
+              gestureEnabled: true,
             }}
-          />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="light" />
-      </ThemeProvider>
-    </DistrictSelectionProvider>
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen 
+              name="dashboard" 
+              options={{
+                animation: 'slide_from_right',
+                gestureEnabled: false, // Prevent back gesture on dashboard
+              }}
+            />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="light" />
+        </ThemeProvider>
+      </DistrictSelectionProvider>
+    </GroundwaterProvider>
   );
 }

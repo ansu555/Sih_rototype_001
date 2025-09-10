@@ -22,7 +22,14 @@ const desaturatedStyle = [
   { featureType: 'water', stylers: [{ color: '#b3cde0' }] },
 ];
 
-export default function GISMap({ stations, height = 320 }: { stations: Station[]; height?: number }) {
+interface GISMapProps {
+  stations: Station[];
+  height?: number;              // explicit height when not fullscreen
+  fullscreen?: boolean;         // if true, render in fullscreen mode (layout handled by parent)
+  onToggleFullscreen?: () => void; // toggle callback
+}
+
+export default function GISMap({ stations, height = 320, fullscreen = false, onToggleFullscreen }: GISMapProps) {
   const mapRef = useRef<MapView>(null);
   const [mapType, setMapType] = useState<MapType>('standard');
 
@@ -51,7 +58,7 @@ export default function GISMap({ stations, height = 320 }: { stations: Station[]
   };
 
   return (
-    <View style={[styles.wrapper, { height }] }>
+    <View style={[styles.wrapper, fullscreen ? styles.fullscreenWrapper : { height }] }>
       <MapView 
         ref={mapRef}
         style={StyleSheet.absoluteFill} 
@@ -109,6 +116,11 @@ export default function GISMap({ stations, height = 320 }: { stations: Station[]
           </Marker>
         ))}
       </MapView>
+      <View style={[styles.topBar, fullscreen && styles.topBarFullscreen]}> 
+        <TouchableOpacity onPress={onToggleFullscreen} style={styles.fullBtn} accessibilityRole="button" accessibilityLabel={fullscreen ? 'Exit fullscreen map' : 'Enter fullscreen map'}>
+          <Text style={styles.fullBtnText}>{fullscreen ? '×' : '⛶'}</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.zoomControls}>
         <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
           <Text style={styles.zoomButtonText}>+</Text>
@@ -136,6 +148,7 @@ export default function GISMap({ stations, height = 320 }: { stations: Station[]
 
 const styles = StyleSheet.create({
   wrapper: { borderRadius: 16, overflow: 'hidden', backgroundColor: '#DDE3E8', width: '100%', alignSelf: 'stretch' },
+  fullscreenWrapper: { borderRadius: 0, flex: 1, width: '100%', height: '100%' },
   marker: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: '#004D99' },
   markerText: { color: '#fff', fontSize: 11, fontWeight: '600' },
   zoomControls: { position: 'absolute', bottom: 16, right: 8, gap: 8 },
@@ -146,4 +159,8 @@ const styles = StyleSheet.create({
   typeButtonActive: { backgroundColor: '#004D99' },
   typeText: { fontSize: 12, fontWeight: '600', color: '#004D99' },
   typeTextActive: { color: '#fff' },
+  topBar: { position: 'absolute', top: 10, left: 10, flexDirection: 'row', zIndex: 10 },
+  topBarFullscreen: { top: 20 },
+  fullBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.9)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width:0, height:2 }, shadowOpacity: 0.25, shadowRadius: 4 },
+  fullBtnText: { fontSize: 20, fontWeight: '700', color: '#004D99' },
 });

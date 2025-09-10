@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, ScrollView } from 'react-native';
 import GISMap from '@/components/GISMap';
 import TrendChart from '@/components/TrendChart';
@@ -7,6 +7,10 @@ import { useDashboard } from '@/hooks/useDashboard';
 export default function DashboardScreen() {
   const { width } = useWindowDimensions();
   const isWide = width >= 900; // breakpoint for two columns
+  const [mapFullscreen, setMapFullscreen] = useState(false);
+  const toggleMapFullscreen = () => setMapFullscreen(f => !f);
+  // Aspect ratio height when not fullscreen (limit for very tall screens)
+  const mapHeight = Math.min(Math.max(width * 0.55, 320), 540); // clamp between 320 and 540
   const { state: { menuOpen, stationData, metricData }, actions: { toggleMenu, onLogout } } = useDashboard();
 
   return (
@@ -32,35 +36,41 @@ export default function DashboardScreen() {
           )}
         </View>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.contentWrapper, !isWide && styles.contentStack]}>        
-          <View style={[styles.column, styles.leftCol]}> 
-            <PlaceholderPanel title="Spatial Distribution (GIS)">
-              <GISMap stations={stationData} height={isWide ? 420 : 360} />
-            </PlaceholderPanel>
-            <Text style={styles.sectionTitle}>Key Metrics</Text>
-            <View style={styles.metricGrid}>
-              {metricData.map(m => (
-                <MetricCard key={m.key} label={m.label} value={m.value} trend={m.trend} highlight={m.highlight} />
-              ))}
-            </View>
-            <PlaceholderPanel title="Trend Analysis (30d)">
-              <TrendChart />
-            </PlaceholderPanel>
-          </View>
-          <View style={[styles.column, isWide ? styles.rightCol : null]}> 
-            <PlaceholderPanel title="Recent Alerts">
-              <Text style={styles.placeholderText}>• High drawdown at Well #A12{"\n"}• Rapid recharge anomaly at Site 7{ "\n"}• Salinity threshold exceeded in Block 3</Text>
-            </PlaceholderPanel>
-            <PlaceholderPanel title="Data Quality Flags">
-              <Text style={styles.placeholderText}>[Quality table placeholder]</Text>
-            </PlaceholderPanel>
-            <PlaceholderPanel title="Planned Maintenance">
-              <Text style={styles.placeholderText}>[Schedule placeholder]</Text>
-            </PlaceholderPanel>
-          </View>
+      {mapFullscreen ? (
+        <View style={styles.fullscreenContainer}> 
+          <GISMap stations={stationData} fullscreen onToggleFullscreen={toggleMapFullscreen} />
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={[styles.contentWrapper, !isWide && styles.contentStack]}>        
+            <View style={[styles.column, styles.leftCol]}> 
+              <PlaceholderPanel title="Spatial Distribution (GIS)">
+                <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />
+              </PlaceholderPanel>
+              <Text style={styles.sectionTitle}>Key Metrics</Text>
+              <View style={styles.metricGrid}>
+                {metricData.map(m => (
+                  <MetricCard key={m.key} label={m.label} value={m.value} trend={m.trend} highlight={m.highlight} />
+                ))}
+              </View>
+              <PlaceholderPanel title="Trend Analysis (30d)">
+                <TrendChart />
+              </PlaceholderPanel>
+            </View>
+            <View style={[styles.column, isWide ? styles.rightCol : null]}> 
+              <PlaceholderPanel title="Recent Alerts">
+                <Text style={styles.placeholderText}>• High drawdown at Well #A12{"\n"}• Rapid recharge anomaly at Site 7{ "\n"}• Salinity threshold exceeded in Block 3</Text>
+              </PlaceholderPanel>
+              <PlaceholderPanel title="Data Quality Flags">
+                <Text style={styles.placeholderText}>[Quality table placeholder]</Text>
+              </PlaceholderPanel>
+              <PlaceholderPanel title="Planned Maintenance">
+                <Text style={styles.placeholderText}>[Schedule placeholder]</Text>
+              </PlaceholderPanel>
+            </View>
+          </View>
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -119,5 +129,6 @@ const styles = StyleSheet.create({
   panelTitle: { fontSize: 15, fontWeight: '700', color: '#004D99' },
   panelBody: { minHeight: 80 },
   placeholderText: { fontSize: 13, color: '#5A6A78', lineHeight: 18 },
+  fullscreenContainer: { flex: 1, backgroundColor: '#000' },
 });
 

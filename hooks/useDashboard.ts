@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Station } from '@/types/station';
 import { sampleStations } from '@/data/stations';
-import { metrics } from '../data/metrics';
 
 export function useDashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,8 +11,23 @@ export function useDashboard() {
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const onLogout = useCallback(() => { router.replace('/'); }, [router]);
 
-  const stationData: Station[] = sampleStations;
-  const metricData = metrics;
+  const stationData: Station[] = sampleStations; // later can be fetched from API
+
+  const metricData = useMemo(() => {
+    const total = stationData.length;
+    const avgDepth = total ? stationData.reduce((s, st) => s + st.depthMeters, 0) / total : 0;
+    const critical = stationData.filter(s => s.status === 'critical').length;
+    const semi = stationData.filter(s => s.status === 'semi-critical').length;
+    const safe = stationData.filter(s => s.status === 'safe').length;
+    // Simple placeholder trend logic: show +N for critical if any, -N for safe improvement etc.
+    return [
+      { key: 'activeSensors', label: 'Active Sensors', value: String(total), trend: total ? '+0' : '0' },
+      { key: 'avgDepth', label: 'Avg Depth (m)', value: avgDepth.toFixed(1), trend: '\u00b10.0' },
+      { key: 'criticalSites', label: 'Critical Sites', value: String(critical), trend: critical ? '+0' : '0', highlight: critical > 0 },
+      { key: 'semiCritical', label: 'Semi-Critical', value: String(semi), trend: semi ? '+0' : '0' },
+      { key: 'safeSites', label: 'Safe Sites', value: String(safe), trend: safe ? '+0' : '0' },
+    ];
+  }, [stationData]);
 
   const summary = useMemo(() => ({
     sensorCount: metricData.find(m => m.key === 'activeSensors')?.value,

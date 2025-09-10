@@ -1,0 +1,46 @@
+{
+	"expo": {
+		"name": "Prototype_001",
+		"slug": "prototype-001",
+		"scheme": "prototype001",
+		"version": "1.0.0",
+		"orientation": "portrait",
+		"icon": "./app/assets/images/icon.png",
+		"userInterfaceStyle": "automatic",
+		"splash": {
+			"image": "./app/assets/images/splash-icon.png",
+			"resizeMode": "contain",
+			"backgroundColor": "#ffffff"
+		},
+		"assetBundlePatterns": [
+			"**/*"
+		],
+		"ios": {
+			"supportsTablet": true,
+			"bundleIdentifier": "com.prototype001.app",
+			"config": {
+				"googleMapsApiKey": "${GOOGLE_MAPS_API_KEY}"
+			}
+		},
+		"android": {
+			"package": "com.prototype001.app",
+			"adaptiveIcon": {
+				"foregroundImage": "./app/assets/images/adaptive-icon.png",
+				"backgroundColor": "#ffffff"
+			},
+			"config": {
+				"googleMaps": {
+					"apiKey": "${GOOGLE_MAPS_API_KEY}"
+				}
+			}
+		},
+		"web": {
+			"favicon": "./app/assets/images/favicon.png"
+		},
+		"extra": {
+			"eas": {
+				"projectId": "replace-with-eas-project-id"
+			}
+		}
+	}
+}

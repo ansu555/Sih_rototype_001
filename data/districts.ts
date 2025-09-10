@@ -3,15 +3,15 @@
 // { type: 'Feature', properties: { DISTRICT: 'Bankura', ST_NM: 'West Bengal', DISTRICT_ID?: string }, geometry: { type: 'MultiPolygon' | 'Polygon', coordinates: number[][][] | number[][][][] } }
 // NOTE: Current provided file is empty – loader will return an empty array until data is populated.
 
-import raw from './india-districts-2019-734.json';
+// Load GeoJSON from assets (wb_districts.json) for West Bengal districts
+import raw from '../assets/data/wb_districts.json';
 
 export interface DistrictFeatureProperties {
-  DISTRICT?: string;        // common naming in many datasets
-  district?: string;        // alternative lowercase
-  NAME_2?: string;          // alternative (GADM style)
-  ST_NM?: string;           // state name
-  state?: string;           // alt state name key
-  DISTRICT_ID?: string;     // optional stable id
+  district: string;         // district name
+  dt_code: string;          // district code/id
+  st_nm: string;            // state name (West Bengal)
+  st_code?: string;         // state code
+  year?: string;            // data year
   [k: string]: any;         // allow extra attrs
 }
 
@@ -67,9 +67,9 @@ export function loadAllDistricts(): DistrictShape[] {
     const polygons = toLatLngPairs(f.geometry.coordinates);
     if (!polygons.length) return;
     const props = f.properties || {};
-    const name = props.DISTRICT || props.district || props.NAME_2 || `District ${idx}`;
-    const state = props.ST_NM || props.state || 'Unknown';
-    const id = (props.DISTRICT_ID || f.id || `${state}-${name}-${idx}`).toString();
+  const name = props.district;
+  const state = props.st_nm;
+  const id = props.dt_code.toString();
     out.push({ id, name, state, polygons });
   });
   return out;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, GeoJSON } from 'react-leaflet';
+import wbDistricts from '../assets/data/wb_districts.geojson';
 import 'leaflet/dist/leaflet.css';
 
 export type StationStatus = 'safe' | 'semi-critical' | 'critical';
@@ -40,6 +41,19 @@ function InvalidateOnResize() {
 }
 
 export default function GISMap({ stations, height = 260 }: { stations: Station[]; height?: number }) {
+  const wbLayerRef = useRef<any>(null);
+  function FitToBounds() {
+    const map = useMap();
+    useEffect(() => {
+      const layer: any = wbLayerRef.current;
+      const bounds = layer?.getBounds?.();
+      if (bounds) {
+        map.fitBounds(bounds, { padding: [12, 12] });
+      }
+    }, [map]);
+    return null;
+  }
+
   return (
     <View style={[styles.wrapper, { height }] }>
       <MapContainer
@@ -48,6 +62,18 @@ export default function GISMap({ stations, height = 260 }: { stations: Station[]
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {/* West Bengal district borders (GeoJSON) */}
+        {/** Type cast used to satisfy TS for react-leaflet GeoJSON style prop */}
+        {/** Replace the asset file with real WB districts GeoJSON to see borders */}
+        <GeoJSON ref={wbLayerRef} {...({
+          data: wbDistricts,
+          style: {
+            color: '#1E3A8A',
+            weight: 1,
+            fillOpacity: 0,
+          },
+        } as any)} />
+        <FitToBounds />
         {stations.map(s => (
           <CircleMarker 
             key={s.id} 

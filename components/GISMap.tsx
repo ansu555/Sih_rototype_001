@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, MapType } from 'react-native-maps';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { WEST_BENGAL_POLYGONS } from '../data/westBengalGeo';
+import { WEST_BENGAL_DISTRICTS } from '../data/districts';
 import { INDIA_OUTLINE_POLYGONS, INDIA_BORDER_POLYGONS } from '../data/indiaOutline';
 import { INTERNATIONAL_BORDER_LINES } from '../data/indiaInternationalBorder';
 
@@ -108,6 +109,25 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
              zIndex={2}
             />
           ))}
+        {/* District borders for West Bengal */}
+        {WEST_BENGAL_DISTRICTS.map(d => (
+          <Polygon
+            key={`district-${d.id}`}
+            coordinates={d.polygons[0] || []}
+            strokeColor="rgba(0,0,0,0.5)"
+            strokeWidth={1}
+            fillColor="transparent"
+            tappable={true}
+            onPress={() => {
+              console.log(`District clicked: ${d.name} (${d.id})`);
+              // You can add custom logic here like:
+              // - Show district info popup
+              // - Navigate to district details
+              // - Update selection state
+            }}
+            zIndex={3}
+          />
+        ))}
         {stations.map(s => (
           <Marker key={s.id} coordinate={{ latitude: s.latitude, longitude: s.longitude }} title={s.name} description={`Depth: ${s.depthMeters} m`}>
             <View style={styles.marker}> 

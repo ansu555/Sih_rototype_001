@@ -86,18 +86,20 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
   };
 
   const handleZoomIn = () => {
-    mapRef.current?.animateToRegion({
-      ...region,
-      latitudeDelta: region.latitudeDelta * 0.5,
-      longitudeDelta: region.longitudeDelta * 0.5,
+    mapRef.current?.getCamera().then(camera => {
+      mapRef.current?.animateCamera({
+        center: camera.center,
+        zoom: Math.min(camera.zoom + 1, 20), // Max zoom level 20
+      });
     });
   };
 
   const handleZoomOut = () => {
-    mapRef.current?.animateToRegion({
-      ...region,
-      latitudeDelta: region.latitudeDelta * 2,
-      longitudeDelta: region.longitudeDelta * 2,
+    mapRef.current?.getCamera().then(camera => {
+      mapRef.current?.animateCamera({
+        center: camera.center,
+        zoom: Math.max(camera.zoom - 1, 1), // Min zoom level 1
+      });
     });
   };
 
@@ -112,6 +114,16 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
         provider={PROVIDER_GOOGLE}
         mapType={mapType}
         customMapStyle={mapType === 'standard' ? desaturatedStyle : undefined}
+        minZoomLevel={1}
+        maxZoomLevel={20}
+        showsUserLocation={false}
+        showsMyLocationButton={false}
+        showsCompass={false}
+        showsScale={false}
+        showsBuildings={false}
+        showsIndoors={false}
+        showsPointsOfInterest={false}
+        showsTraffic={false}
       >
         {INDIA_OUTLINE_POLYGONS.map((poly, idx) => (
           <Polygon
@@ -169,16 +181,34 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
             />
           );
         })}
-        {markerStations.map(s => (
-          <Marker key={s.id} coordinate={{ latitude: s.latitude, longitude: s.longitude }} title={s.name} description={`Depth: ${s.depthMeters} m`}>
-            <View style={styles.marker}> 
-              <Text style={styles.markerText}>{Math.round(s.depthMeters)}m</Text>
-            </View>
-          </Marker>
-        ))}
+        {markerStations.map(s => {
+          // Determine marker color based on depth
+          const getMarkerColor = (depth: number) => {
+            if (depth < 10) return '#2e8b57'; // Green for safe
+            if (depth < 20) return '#ffcc00'; // Yellow for semi-critical
+            return '#ff4500'; // Red for critical
+          };
+          
+          return (
+            <Marker 
+              key={s.id} 
+              coordinate={{ latitude: s.latitude, longitude: s.longitude }} 
+              onPress={() => {
+                // Show detailed station information
+                const stationWithDistrict = s as any;
+                const districtName = stationWithDistrict.district || 'Unknown District';
+                const status = s.depthMeters < 10 ? 'Safe' : s.depthMeters < 20 ? 'Semi-Critical' : 'Critical';
+                
+                alert(`Station Details:\n\nName: ${s.name}\nStation Code: ${s.id}\nDepth: ${s.depthMeters.toFixed(1)} m\nDistrict: ${districtName}\nStatus: ${status}\nCoordinates: ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}`);
+              }}
+            >
+              <View style={[styles.stationDot, { backgroundColor: getMarkerColor(s.depthMeters) }]} />
+            </Marker>
+          );
+        })}
       </MapView>
       <View style={styles.legendBox}>
-        <Text style={styles.legendTitle}>Avg Depth</Text>
+        <Text style={styles.legendTitle}>District Avg Depth</Text>
         <View style={styles.gradientBar}>
           <View style={[styles.gradientSegment,{ backgroundColor:'#2e8b57'}]} />
           <View style={[styles.gradientSegment,{ backgroundColor:'#9acb50'}]} />
@@ -189,6 +219,23 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
         <View style={styles.legendLabels}>
           <Text style={styles.legendLabel}>{depthRange.min.toFixed(1)}</Text>
           <Text style={styles.legendLabel}>{depthRange.max.toFixed(1)} m</Text>
+        </View>
+      </View>
+      <View style={styles.stationLegendBox}>
+        <Text style={styles.legendTitle}>Station Status</Text>
+        <View style={styles.stationLegendItems}>
+          <View style={styles.stationLegendItem}>
+            <View style={[styles.stationLegendDot, { backgroundColor: '#2e8b57' }]} />
+            <Text style={styles.stationLegendText}>Safe (&lt;10m)</Text>
+          </View>
+          <View style={styles.stationLegendItem}>
+            <View style={[styles.stationLegendDot, { backgroundColor: '#ffcc00' }]} />
+            <Text style={styles.stationLegendText}>Semi-Critical (10-20m)</Text>
+          </View>
+          <View style={styles.stationLegendItem}>
+            <View style={[styles.stationLegendDot, { backgroundColor: '#ff4500' }]} />
+            <Text style={styles.stationLegendText}>Critical (&gt;20m)</Text>
+          </View>
         </View>
       </View>
       <View style={[styles.topBar, fullscreen && styles.topBarFullscreen]}> 
@@ -236,6 +283,7 @@ const styles = StyleSheet.create({
   fullscreenWrapper: { borderRadius: 0, flex: 1, width: '100%', height: '100%' },
   marker: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: '#004D99' },
   markerText: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  stationDot: { width: 8, height: 8, borderRadius: 4, borderWidth: 1, borderColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3 },
   zoomControls: { position: 'absolute', bottom: 16, right: 8, gap: 8 },
   zoomButton: { width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
   zoomButtonText: { fontSize: 20, fontWeight: 'bold', color: '#004D99' },
@@ -249,11 +297,16 @@ const styles = StyleSheet.create({
   fullBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.9)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width:0, height:2 }, shadowOpacity: 0.25, shadowRadius: 4 },
   fullBtnText: { fontSize: 20, fontWeight: '700', color: '#004D99' },
   legendBox: { position: 'absolute', bottom: 16, left: 8, backgroundColor: 'rgba(255,255,255,0.9)', padding: 8, borderRadius: 8, width: 140 },
+  stationLegendBox: { position: 'absolute', bottom: 16, right: 8, backgroundColor: 'rgba(255,255,255,0.9)', padding: 8, borderRadius: 8, width: 160 },
   legendTitle: { fontSize: 12, fontWeight: '700', color: '#222', marginBottom: 4 },
   gradientBar: { height: 10, borderRadius: 5, overflow: 'hidden', flexDirection: 'row' },
   gradientSegment: { flex: 1 },
   legendLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   legendLabel: { fontSize: 10, color: '#222' },
+  stationLegendItems: { gap: 4 },
+  stationLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stationLegendDot: { width: 12, height: 12, borderRadius: 6 },
+  stationLegendText: { fontSize: 10, color: '#222', flex: 1 },
   dataBtn: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', backgroundColor: '#E0A100' },
   dataBtnText: { fontSize: 16 },
 });

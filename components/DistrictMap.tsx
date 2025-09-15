@@ -1,13 +1,15 @@
 import React, { useMemo, useRef } from 'react';
-import MapView, { Polygon, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Polygon, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { StyleSheet, View, Text } from 'react-native';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
+import { useGroundwater } from '@/contexts/GroundwaterContext';
 import { WEST_BENGAL_POLYGONS } from '@/data/westBengalGeo';
 
 // Re-use existing styling palette from GISMap for coherence.
 
 export default function DistrictMap() {
   const { districts, selectedDistrictId, setSelectedDistrictId, selectedDistrict } = useDistrictSelection();
+  const { stations: gwStations } = useGroundwater();
   const mapRef = useRef<MapView>(null);
 
   const region = {
@@ -19,6 +21,14 @@ export default function DistrictMap() {
 
   const districtPolygons = useMemo(() => districts, [districts]);
 
+  // Filter stations based on selected district
+  const visibleStations = useMemo(() => {
+    if (!selectedDistrictId) return gwStations;
+    const selected = districts.find(d => d.id === selectedDistrictId);
+    if (!selected) return gwStations;
+    return gwStations.filter(s => s.district === selected.name);
+  }, [gwStations, selectedDistrictId, districts]);
+
   return (
     <View style={styles.wrapper}>
       <MapView
@@ -28,6 +38,16 @@ export default function DistrictMap() {
         provider={PROVIDER_GOOGLE}
         zoomEnabled
         scrollEnabled
+        minZoomLevel={1}
+        maxZoomLevel={20}
+        showsUserLocation={false}
+        showsMyLocationButton={false}
+        showsCompass={false}
+        showsScale={false}
+        showsBuildings={false}
+        showsIndoors={false}
+        showsPointsOfInterest={false}
+        showsTraffic={false}
       >
         {/* Base West Bengal fill for context */}
         {WEST_BENGAL_POLYGONS.map((poly, i) => (
@@ -46,6 +66,27 @@ export default function DistrictMap() {
             zIndex={d.id === selectedDistrictId ? 3 : 2}
           />
         ))}
+        {/* Station markers */}
+        {visibleStations.map(s => {
+          const getMarkerColor = (depth: number) => {
+            if (depth < 10) return '#2e8b57'; // Green for safe
+            if (depth < 20) return '#ffcc00'; // Yellow for semi-critical
+            return '#ff4500'; // Red for critical
+          };
+          
+          return (
+            <Marker 
+              key={s.stationCode} 
+              coordinate={{ latitude: s.latitude, longitude: s.longitude }} 
+              onPress={() => {
+                const status = s.latestDepth < 10 ? 'Safe' : s.latestDepth < 20 ? 'Semi-Critical' : 'Critical';
+                alert(`Station Details:\n\nName: ${s.name}\nStation Code: ${s.stationCode}\nDepth: ${s.latestDepth.toFixed(1)} m\nDistrict: ${s.district}\nStatus: ${status}\nCoordinates: ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}`);
+              }}
+            >
+              <View style={[styles.stationDot, { backgroundColor: getMarkerColor(s.latestDepth) }]} />
+            </Marker>
+          );
+        })}
       </MapView>
       {selectedDistrict && (
         <View style={styles.fabBox} pointerEvents="none">
@@ -69,4 +110,7 @@ const styles = StyleSheet.create({
   fabMeta: { color: '#E8F2FF', fontSize: 12, marginTop: 2 },
   emptyOverlay: { position: 'absolute', top: 0, left:0, right:0, bottom:0, justifyContent: 'center', alignItems:'center', padding: 20 },
   emptyText: { backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, fontSize: 14, color: '#333' },
+  marker: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: '#004D99' },
+  markerText: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  stationDot: { width: 8, height: 8, borderRadius: 4, borderWidth: 1, borderColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3 },
 });

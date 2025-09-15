@@ -10,6 +10,7 @@ import birbhumRaw from '../assets/data/GWL/Birbhum/GWATERLVL.json';
 import coochBeharRaw from '../assets/data/GWL/Cooch Behar/GWATERLVL.json';
 // @ts-ignore
 import nadiaRaw from '../assets/data/GWL/Nadia/GWATERLVL.json';
+import { validateStationCoordinates } from '../utils/coordinateValidator';
 // Dynamically imports JSON files placed under assets/data/GWL/<DistrictName>/GWATERLVL*.json
 // Each file contains an array of readings (multiple timestamps per stationCode).
 
@@ -95,6 +96,15 @@ export function buildGroundwaterData(): GroundwaterDataBundle {
 
   raw.forEach(rec => {
     if (!rec.stationCode || rec.latitude == null || rec.longitude == null || rec.dataValue == null) return;
+    
+    // Validate coordinates
+    const validation = validateStationCoordinates(rec.latitude, rec.longitude, rec.district, true);
+    if (!validation.isValid && validation.correctedLat && validation.correctedLng) {
+      console.warn(`Station ${rec.stationCode} coordinates corrected:`, validation.issues);
+      rec.latitude = validation.correctedLat;
+      rec.longitude = validation.correctedLng;
+    }
+    
     const key = rec.stationCode;
     const readingDate = toDate(rec.dataTime);
     const districtNorm = normalizeDistrictName(rec.district);

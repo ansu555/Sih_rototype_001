@@ -2,16 +2,29 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Station } from '@/types/station';
 import { sampleStations } from '@/data/stations';
+import { useGroundwater } from '@/contexts/GroundwaterContext';
 
 export function useDashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const { stations: gwStations } = useGroundwater();
 
   const toggleMenu = useCallback(() => setMenuOpen(o => !o), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const onLogout = useCallback(() => { router.replace('/'); }, [router]);
 
-  const stationData: Station[] = sampleStations; // later can be fetched from API
+  // Convert groundwater stations to Station format for compatibility
+  const stationData: Station[] = useMemo(() => {
+    return gwStations.map(s => ({
+      id: s.stationCode,
+      name: s.name,
+      latitude: s.latitude,
+      longitude: s.longitude,
+      depthMeters: s.latestDepth,
+      status: s.latestDepth < 10 ? 'safe' : s.latestDepth < 20 ? 'semi-critical' : 'critical',
+      district: s.district // Include district information
+    } as Station & { district: string }));
+  }, [gwStations]);
 
   const metricData = useMemo(() => {
     const total = stationData.length;

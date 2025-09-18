@@ -31,6 +31,8 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
   const mapRef = useRef<MapView>(null);
   const [mapType, setMapType] = useState<MapType>('standard');
   const [dataPanelVisible, setDataPanelVisible] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(8);
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
   const { selectedDistrictId, setSelectedDistrictId } = useDistrictSelection();
   const { districtSummaries, stations: gwStations } = useGroundwater();
 
@@ -59,8 +61,8 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
     return `rgba(${r},${g},${b},0.35)`;
   }
 
-  // Merge passed stations with real groundwater latest if caller provides empty.
-  const markerStations: Station[] = useMemo(() => {
+  // Get all available stations
+  const allStations: Station[] = useMemo(() => {
     const base = stations.length ? stations : gwStations.map(s => ({
       id: s.stationCode,
       name: s.name,
@@ -76,6 +78,17 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
     const districtName = selected.name;
     return base.filter((s: any) => s.district === districtName) as Station[];
   }, [stations, gwStations, selectedDistrictId]);
+
+  // Only show selected station on map
+  const markerStations = useMemo(() => {
+    if (!selectedStationId) return [];
+    return allStations.filter(s => s.id === selectedStationId);
+  }, [allStations, selectedStationId]);
+
+  // Get selected station for info display
+  const selectedStation = useMemo(() => {
+    return allStations.find(s => s.id === selectedStationId) || null;
+  }, [allStations, selectedStationId]);
 
   // Override initial region to West Bengal for now
   const region = {
@@ -103,6 +116,22 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
     });
   };
 
+  const handleStationSelect = (stationId: string | null) => {
+    setSelectedStationId(stationId);
+    if (stationId) {
+      const station = allStations.find(s => s.id === stationId);
+      if (station) {
+        // Center map on selected station
+        mapRef.current?.animateToRegion({
+          latitude: station.latitude,
+          longitude: station.longitude,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
+        }, 1000);
+      }
+    }
+  };
+
   return (
     <View style={[styles.wrapper, fullscreen ? styles.fullscreenWrapper : { height }] }>
       <MapView 
@@ -124,6 +153,10 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
         showsIndoors={false}
         showsPointsOfInterest={false}
         showsTraffic={false}
+        onRegionChangeComplete={(region) => {
+          const zoom = Math.log2(360 / region.longitudeDelta);
+          setZoomLevel(zoom);
+        }}
       >
         {INDIA_OUTLINE_POLYGONS.map((poly, idx) => (
           <Polygon
@@ -189,20 +222,23 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
             return '#ff4500'; // Red for critical
           };
           
+          // Scale dot size based on zoom level
+          const dotSize = Math.max(4, Math.min(16, zoomLevel * 1.5));
+          
           return (
             <Marker 
               key={s.id} 
               coordinate={{ latitude: s.latitude, longitude: s.longitude }} 
               onPress={() => {
-                // Show detailed station information
-                const stationWithDistrict = s as any;
-                const districtName = stationWithDistrict.district || 'Unknown District';
-                const status = s.depthMeters < 10 ? 'Safe' : s.depthMeters < 20 ? 'Semi-Critical' : 'Critical';
-                
-                alert(`Station Details:\n\nName: ${s.name}\nStation Code: ${s.id}\nDepth: ${s.depthMeters.toFixed(1)} m\nDistrict: ${districtName}\nStatus: ${status}\nCoordinates: ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}`);
+                // Station info is now shown in the info card below
               }}
             >
-              <View style={[styles.stationDot, { backgroundColor: getMarkerColor(s.depthMeters) }]} />
+              <View style={[styles.stationDot, { 
+                backgroundColor: getMarkerColor(s.depthMeters),
+                width: dotSize,
+                height: dotSize,
+                borderRadius: dotSize / 2
+              }]} />
             </Marker>
           );
         })}
@@ -273,7 +309,28 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
       <DataPanel 
         visible={dataPanelVisible}
         onClose={() => setDataPanelVisible(false)}
+        onStationSelect={handleStationSelect}
+        selectedStationId={selectedStationId}
       />
+
+      {/* Station Info Card */}
+      {selectedStation && (
+        <View style={styles.stationInfoCard}>
+          <View style={styles.stationInfoHeader}>
+            <Text style={styles.stationInfoName}>{selectedStation.name}</Text>
+          </View>
+          <Text style={styles.stationInfoCode}>Code: {selectedStation.id}</Text>
+          <Text style={styles.stationInfoDepth}>
+            Depth: {selectedStation.depthMeters.toFixed(1)} m
+          </Text>
+          <Text style={styles.stationInfoStatus}>
+            Status: {selectedStation.depthMeters < 10 ? 'Safe' : selectedStation.depthMeters < 20 ? 'Semi-Critical' : 'Critical'}
+          </Text>
+          <Text style={styles.stationInfoCoords}>
+            {selectedStation.latitude.toFixed(4)}, {selectedStation.longitude.toFixed(4)}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -283,7 +340,7 @@ const styles = StyleSheet.create({
   fullscreenWrapper: { borderRadius: 0, flex: 1, width: '100%', height: '100%' },
   marker: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: '#004D99' },
   markerText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  stationDot: { width: 8, height: 8, borderRadius: 4, borderWidth: 1, borderColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3 },
+  stationDot: { borderRadius: 4, borderWidth: 1, borderColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3 },
   zoomControls: { position: 'absolute', bottom: 16, right: 8, gap: 8 },
   zoomButton: { width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
   zoomButtonText: { fontSize: 20, fontWeight: 'bold', color: '#004D99' },
@@ -309,4 +366,11 @@ const styles = StyleSheet.create({
   stationLegendText: { fontSize: 10, color: '#222', flex: 1 },
   dataBtn: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', backgroundColor: '#E0A100' },
   dataBtnText: { fontSize: 16 },
+  stationInfoCard: { position: 'absolute', bottom: 16, left: 8, right: 8, backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  stationInfoHeader: { marginBottom: 8 },
+  stationInfoName: { fontSize: 16, fontWeight: '700', color: '#222' },
+  stationInfoCode: { fontSize: 12, color: '#666', marginBottom: 4 },
+  stationInfoDepth: { fontSize: 14, color: '#222', marginBottom: 4 },
+  stationInfoStatus: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  stationInfoCoords: { fontSize: 12, color: '#666' },
 });

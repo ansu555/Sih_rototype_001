@@ -216,3 +216,4 @@ if (require.main === module) {
 }
 
 module.exports = { correctAllStations, correctCoordinates };
+

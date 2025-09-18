@@ -1,14 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
 
 interface DataPanelProps {
   visible: boolean;
   onClose: () => void;
+  onStationSelect: (stationId: string | null) => void;
+  selectedStationId: string | null;
 }
 
-export default function DataPanel({ visible, onClose }: DataPanelProps) {
+export default function DataPanel({ visible, onClose, onStationSelect, selectedStationId }: DataPanelProps) {
   const { stations } = useGroundwater();
   const { selectedDistrict } = useDistrictSelection();
   const [slideAnim] = useState(new Animated.Value(-300));
@@ -190,6 +193,27 @@ export default function DataPanel({ visible, onClose }: DataPanelProps) {
               </TouchableOpacity>
             )}
           </View>
+
+          {/* Station Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>View Station on Map</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={selectedStationId || ''}
+                onValueChange={(value) => onStationSelect(value === '' ? null : value)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select a station..." value="" />
+                {filteredStations.map(station => (
+                  <Picker.Item 
+                    key={station.stationCode} 
+                    label={`${station.name} (${station.stationCode})`} 
+                    value={station.stationCode} 
+                  />
+                ))}
+              </Picker>
+            </View>
+          </View>
         </ScrollView>
       </Animated.View>
     </>
@@ -293,5 +317,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#fff',
     fontWeight: '600',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+  },
+  picker: {
+    height: 50,
   },
 });

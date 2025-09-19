@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions, Modal, FlatList } from 'react-native';
 import TrendChart from '@/components/TrendChart';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
@@ -13,6 +13,9 @@ export default function TrendsScreen() {
   const [dateRange, setDateRange] = useState('Jan 2023 - Dec 2023');
   const [zoomLevel, setZoomLevel] = useState('6M');
   const [selectedStation, setSelectedStation] = useState(null);
+  const [showStationPicker, setShowStationPicker] = useState(false);
+  const [showDistrictPicker, setShowDistrictPicker] = useState(false);
+  const [availableStations, setAvailableStations] = useState([]);
   
   const [trendSummary, setTrendSummary] = useState({
     average: 0,
@@ -23,7 +26,31 @@ export default function TrendsScreen() {
 
   useEffect(() => {
     calculateTrendSummary();
+    updateAvailableStations();
   }, [selectedDistrictId, stations]);
+
+  const getDistrictsWithData = () => {
+    // Get unique districts that have station data
+    const districtsWithData = [...new Set(stations.map(s => s.district))]
+      .map(districtName => districts.find(d => d.name === districtName))
+      .filter(Boolean); // Remove undefined values
+    
+    return districtsWithData;
+  };
+
+  const updateAvailableStations = () => {
+    const filteredStations = selectedDistrictId 
+      ? stations.filter(s => {
+          const districtObj = districts.find(d => d.id === selectedDistrictId);
+          return s.district === districtObj?.name;
+        })
+      : stations;
+    
+    setAvailableStations(filteredStations);
+    if (filteredStations.length > 0 && !selectedStation) {
+      setSelectedStation(filteredStations[0]);
+    }
+  };
 
   const calculateTrendSummary = () => {
     const filteredStations = selectedDistrictId 
@@ -41,7 +68,6 @@ export default function TrendsScreen() {
         seasonal: 'Monsoon',
         forecast: avgDepth + 0.5
       });
-      setSelectedStation(filteredStations[0]);
     }
   };
 
@@ -71,7 +97,10 @@ export default function TrendsScreen() {
         <View style={styles.controlsSection}>
           <View style={styles.controlRow}>
             <Text style={styles.controlLabel}>District:</Text>
-            <TouchableOpacity style={styles.dropdown}>
+            <TouchableOpacity 
+              style={styles.dropdown}
+              onPress={() => setShowDistrictPicker(true)}
+            >
               <Text style={styles.dropdownText}>
                 {selectedDistrict?.name || 'All Districts'} ▼
               </Text>
@@ -151,16 +180,30 @@ export default function TrendsScreen() {
         <View style={[styles.bottomSection, isWide && styles.bottomSectionWide]}>
           <View style={styles.stationDetails}>
             <Text style={styles.sectionTitle}>🔍 STATION DETAILS</Text>
+            
+            {/* Station Selector Dropdown */}
+            <View style={styles.stationSelector}>
+              <Text style={styles.selectorLabel}>Select Station:</Text>
+              <TouchableOpacity 
+                style={styles.stationDropdown}
+                onPress={() => setShowStationPicker(true)}
+              >
+                <Text style={styles.dropdownText}>
+                  {selectedStation ? selectedStation.name : 'Select Station'} ▼
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {selectedStation && (
               <View style={styles.stationInfo}>
                 <Text style={styles.stationName}>{selectedStation.name}</Text>
-                <Text style={styles.stationSubtext}>(Primary)</Text>
+                <Text style={styles.stationSubtext}>({selectedStation.stationCode})</Text>
                 <Text style={styles.stationDepth}>💧 {selectedStation.latestDepth.toFixed(2)}m</Text>
                 <Text style={styles.stationDate}>📅 {new Date(selectedStation.latestTime).toLocaleDateString()}</Text>
                 <Text style={styles.stationLocation}>🏷️ {selectedStation.district}</Text>
-                <TouchableOpacity style={styles.viewAllBtn}>
-                  <Text style={styles.viewAllText}>View All Stations</Text>
-                </TouchableOpacity>
+                <Text style={styles.stationCount}>
+                  📊 {availableStations.length} stations in district
+                </Text>
               </View>
             )}
           </View>
@@ -184,6 +227,114 @@ export default function TrendsScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* District Picker Modal */}
+      <Modal
+        visible={showDistrictPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDistrictPicker(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          onPress={() => setShowDistrictPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select District</Text>
+            <FlatList
+              data={[{ id: null, name: 'All Districts' }, ...getDistrictsWithData()]}
+              keyExtractor={(item) => item.id || 'all'}
+              renderItem={({ item }) => {
+                const isSelected = selectedDistrictId === item.id;
+                
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.districtOption,
+                      isSelected && styles.selectedOption
+                    ]}
+                    onPress={() => {
+                      setSelectedDistrictId(item.id);
+                      setShowDistrictPicker(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.districtOptionText,
+                      isSelected && styles.selectedOptionText
+                    ]}>
+                      {item.name}
+                    </Text>
+                    {isSelected && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Station Picker Modal */}
+      <Modal
+        visible={showStationPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowStationPicker(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          onPress={() => setShowStationPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              Select Station {selectedDistrict ? `in ${selectedDistrict.name}` : ''}
+            </Text>
+            <Text style={styles.modalSubtitle}>
+              {availableStations.length} stations available
+            </Text>
+            <FlatList
+              data={availableStations}
+              keyExtractor={(item) => item.stationCode}
+              renderItem={({ item }) => {
+                const isSelected = selectedStation?.stationCode === item.stationCode;
+                
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.stationOption,
+                      isSelected && styles.selectedOption
+                    ]}
+                    onPress={() => {
+                      setSelectedStation(item);
+                      setShowStationPicker(false);
+                    }}
+                  >
+                    <View style={styles.stationOptionContent}>
+                      <Text style={[
+                        styles.stationOptionName,
+                        isSelected && styles.selectedOptionText
+                      ]}>
+                        {item.name}
+                      </Text>
+                      <Text style={styles.stationOptionCode}>
+                        {item.stationCode}
+                      </Text>
+                      <Text style={styles.stationOptionDepth}>
+                        💧 {item.latestDepth.toFixed(2)}m bgl
+                      </Text>
+                    </View>
+                    {isSelected && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+              maxHeight={400}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -387,6 +538,26 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  stationSelector: {
+    marginBottom: 16,
+  },
+  selectorLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 6,
+  },
+  stationDropdown: {
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: '#374151',
+  },
   stationInfo: {
     gap: 6,
   },
@@ -411,6 +582,88 @@ const styles = StyleSheet.create({
   stationLocation: {
     fontSize: 12,
     color: '#64748B',
+  },
+  stationCount: {
+    fontSize: 12,
+    color: '#64748B',
+    fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '85%',
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  stationOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  selectedOption: {
+    backgroundColor: '#EFF6FF',
+  },
+  stationOptionContent: {
+    flex: 1,
+  },
+  stationOptionName: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  selectedOptionText: {
+    color: '#2563EB',
+  },
+  stationOptionCode: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  stationOptionDepth: {
+    fontSize: 12,
+    color: '#3B82F6',
+    marginTop: 2,
+  },
+  checkmark: {
+    fontSize: 16,
+    color: '#2563EB',
+    fontWeight: 'bold',
+  },
+  districtOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  districtOptionText: {
+    fontSize: 16,
+    color: '#374151',
   },
   eventsPanel: {
     backgroundColor: '#FFFFFF',

@@ -28,34 +28,21 @@ export default function RootLayout() {
     return null;
   }
 
-  // Optional: If there was a font loading error, you could render an error message or allow the app to proceed without the custom font.
-  // if (error) {
-  //   console.error("Error loading fonts:", error);
-  //   // You might want to render a fallback or log the error
-  // }
-
   return (
     <GroundwaterProvider>
       <DistrictSelectionProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack 
-            screenOptions={{ 
-              headerShown: false,
-              animation: 'slide_from_right',
-              gestureEnabled: true,
+          <Stack
+            screenOptions={{
+              headerShown: false, // Hide header for all stack screens by default
             }}
           >
-            <Stack.Screen name="index" />
-            <Stack.Screen 
-              name="dashboard" 
-              options={{
-                animation: 'slide_from_right',
-                gestureEnabled: false, // Prevent back gesture on dashboard
-              }}
-            />
+            {/* The (tabs) layout will be the main navigation now */}
+            <Stack.Screen name="(tabs)" /> 
             <Stack.Screen name="+not-found" />
           </Stack>
-          <StatusBar style="light" />
+          {/* Changed to a fixed style for debugging */}
+          <StatusBar style="auto" /> 
         </ThemeProvider>
       </DistrictSelectionProvider>
     </GroundwaterProvider>

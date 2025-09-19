@@ -1,57 +1,37 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import FontAwesome from '@expo/vector-icons/FontAwesome'; // Or your preferred icon library
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
+    <Tabs 
+      screenOptions={({ route }) => ({
+        tabBarActiveTintColor: '#004D99', // Example active color
+        tabBarInactiveTintColor: 'gray',
+        // headerShown: false, // Uncomment if you want to hide headers for all tab screens by default
+      })}
+    >
       <Tabs.Screen
-        name="index"
+        name="dashboard" // This will look for app/(tabs)/dashboard.tsx
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => <FontAwesome name="tachometer" size={size} color={color} />,
+          headerShown: false, // Assuming dashboard has its own header or no header
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="trends" // This will look for app/(tabs)/trends.tsx
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Trends',
+          tabBarIcon: ({ color, size }) => <FontAwesome name="line-chart" size={size} color={color} />,
+          // Add headerShown: false if this screen shouldn't have a header
         }}
       />
       <Tabs.Screen
-        name="districts"
-        options={{
-          title: 'Districts',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="resources"
+        name="resources" // This will look for app/(tabs)/resources.tsx
         options={{
           title: 'Resources',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet.rectangle.portrait" color={color} />,
+          tabBarIcon: ({ color, size }) => <FontAwesome name="book" size={size} color={color} />,
+          // Add headerShown: false if this screen shouldn't have a header
         }}
       />
     </Tabs>

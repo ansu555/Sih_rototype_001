@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, ScrollView } from 'react-native';
 import GISMap from '@/components/GISMap';
-import TrendChart from '@/components/TrendChart';
 import { useDashboard } from '@/hooks/useDashboard';
 
 export default function DashboardScreen() {
@@ -41,19 +40,16 @@ export default function DashboardScreen() {
           <GISMap stations={stationData} fullscreen onToggleFullscreen={toggleMapFullscreen} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
           <View style={[styles.contentWrapper, !isWide && styles.contentStack]}>        
             <View style={[styles.column, styles.leftCol]}> 
               <PlaceholderPanel title="Spatial Distribution (GIS)">
                 <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />
               </PlaceholderPanel>
-              <PlaceholderPanel title="Trend Analysis (30d)">
-                <TrendChart />
-              </PlaceholderPanel>
             </View>
             <View style={[styles.column, isWide ? styles.rightCol : null]}> 
               <PlaceholderPanel title="Recent Alerts">
-                <Text style={styles.placeholderText}>• High drawdown at Well #A12{\'\n'}• Rapid recharge anomaly at Site 7{ \'\n'}• Salinity threshold exceeded in Block 3</Text>
+                <Text style={styles.placeholderText}>• High drawdown at Well #A12{'\n'}• Rapid recharge anomaly at Site 7{'\n'}• Salinity threshold exceeded in Block 3</Text>
               </PlaceholderPanel>
               <PlaceholderPanel title="Data Quality Flags">
                 <Text style={styles.placeholderText}>[Quality table placeholder]</Text>
@@ -82,7 +78,7 @@ function PlaceholderPanel({ title, children }: { title: string; children: React.
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#F5F5F5' },
-  scrollContent: { paddingBottom: 24 },
+  scrollContent: { paddingBottom: 24 }, // contentContainerStyle for ScrollView
   navBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E3E6E8', shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, elevation: 2 },
   navLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   navRight: { flexDirection: 'row', alignItems: 'center', gap: 16, position: 'relative' },
@@ -95,7 +91,7 @@ const styles = StyleSheet.create({
   dropdownItem: { paddingHorizontal: 14, paddingVertical: 10 },
   dropdownText: { fontSize: 14, color: '#0066CC', fontWeight: '500' },
   logoutText: { color: '#CC3300' },
-  contentWrapper: { flex: 1, flexDirection: 'row', padding: 20, gap: 20 },
+  contentWrapper: { flexGrow: 1, flexDirection: 'row', padding: 20, gap: 20 }, // Changed flex: 1 to flexGrow: 1 for ScrollView content
   contentStack: { flexDirection: 'column' },
   column: { flex: 1, gap: 20 },
   leftCol: {},

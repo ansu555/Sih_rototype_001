@@ -1,105 +1,582 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, ScrollView, Modal, FlatList } from 'react-native';
 import GISMap from '@/components/GISMap';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
+import { useGroundwater } from '@/contexts/GroundwaterContext';
 
 export default function DashboardScreen() {
   const { width } = useWindowDimensions();
-  const isWide = width >= 900; // breakpoint for two columns
+  const isWide = width >= 900;
   const [mapFullscreen, setMapFullscreen] = useState(false);
+  const [showDistrictPicker, setShowDistrictPicker] = useState(false);
   const toggleMapFullscreen = () => setMapFullscreen(f => !f);
-  // Aspect ratio height when not fullscreen (limit for very tall screens)
-  const mapHeight = Math.min(Math.max(width * 0.55, 320), 540); // clamp between 320 and 540
+  const mapHeight = Math.min(Math.max(width * 0.55, 320), 540);
   const { state: { menuOpen, stationData }, actions: { toggleMenu, onLogout } } = useDashboard();
+  const { districts, selectedDistrictId, setSelectedDistrictId, selectedDistrict } = useDistrictSelection();
+  const { stations, refresh } = useGroundwater();
+
+  const [metrics, setMetrics] = useState({
+    overallStatus: { status: 'LOADING', safe: 0, warning: 0, critical: 0 },
+    criticalDistricts: { count: 0, total: 0 },
+    trend: { value: 0, direction: '→' },
+    avgDepth: { value: 0, status: 'Unknown' },
+    stations: { active: 0, total: 0 },
+    anomalies: { count: 0 }
+  });
+
+  useEffect(() => {
+    if (stations && stations.length > 0) {
+      calculateMetrics();
+    }
+  }, [stations, selectedDistrictId]);
+
+  const calculateMetrics = () => {
+    if (!stations || stations.length === 0) {
+      console.log('No station data available');
+      return;
+    }
+
+    console.log('Selected district ID:', selectedDistrictId);
+    console.log('Available stations:', stations.length);
+    console.log('Sample station:', stations[0]);
+    
+    const filteredStations = selectedDistrictId 
+      ? stations.filter(station => {
+          // Find the selected district object to get its name
+          const selectedDistrictObj = districts.find(d => d.id === selectedDistrictId);
+          const selectedDistrictName = selectedDistrictObj?.name;
+          
+          // Match by district name
+          return station.district === selectedDistrictName;
+        })
+      : stations;
+
+    console.log('Filtered stations:', filteredStations.length, 'for district', selectedDistrictId);
+
+    if (filteredStations.length === 0) {
+      setMetrics({
+        overallStatus: { status: 'NO DATA', safe: 0, warning: 0, critical: 0 },
+        criticalDistricts: { count: 0, total: districts.length },
+        trend: { value: 0, direction: '→' },
+        avgDepth: { value: 0, status: 'No Data' },
+        stations: { active: 0, total: 0 },
+        anomalies: { count: 0 }
+      });
+      return;
+    }
+
+    // Use latestDepth property from the actual data structure
+    const safe = filteredStations.filter(s => s.latestDepth && s.latestDepth < 5).length;
+    const warning = filteredStations.filter(s => s.latestDepth && s.latestDepth >= 5 && s.latestDepth < 10).length;
+    const critical = filteredStations.filter(s => s.latestDepth && s.latestDepth >= 10).length;
+    
+    const validDepths = filteredStations.filter(s => s.latestDepth && !isNaN(s.latestDepth));
+    const avgDepth = validDepths.length > 0 
+      ? validDepths.reduce((sum, s) => sum + s.latestDepth, 0) / validDepths.length 
+      : 0;
+    
+    // All stations are considered active if they have recent data
+    const activeStations = filteredStations.filter(s => s.status !== 'INACTIVE').length;
+    
+    // Simple anomaly detection - depths > 2 standard deviations from mean
+    const depths = validDepths.map(s => s.latestDepth);
+    const mean = depths.reduce((a,b) => a+b, 0) / depths.length;
+    const variance = depths.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / depths.length;
+    const std = Math.sqrt(variance) || 1;
+    const anomalies = filteredStations.filter(s => {
+      const z = Math.abs((s.latestDepth - mean) / std);
+      return z >= 2;
+    }).length;
+
+    const newMetrics = {
+      overallStatus: {
+        status: critical > 0 ? 'CRITICAL' : warning > 0 ? 'WARNING' : 'GOOD',
+        safe,
+        warning,
+        critical
+      },
+      criticalDistricts: {
+        count: critical,
+        total: districts.length
+      },
+      trend: {
+        value: 0.3, // Mock trend for now
+        direction: '↓' as const
+      },
+      avgDepth: {
+        value: avgDepth,
+        status: avgDepth < 5 ? 'Good' : avgDepth < 10 ? 'Moderate' : 'Critical'
+      },
+      stations: {
+        active: activeStations,
+        total: filteredStations.length
+      },
+      anomalies: {
+        count: anomalies
+      }
+    };
+
+    console.log('New metrics:', newMetrics);
+    setMetrics(newMetrics);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'GOOD': return '#4CAF50';
+      case 'WARNING': return '#FF9800';
+      case 'CRITICAL': return '#F44336';
+      default: return '#666';
+    }
+  };
 
   return (
-    <View style={styles.page}>      
-      <View style={styles.navBar}>
-        <View style={styles.navLeft}>
-          <View style={styles.logoBox}><Text style={styles.logoText}>DW</Text></View>
-          <Text style={styles.appTitle}>DWLR Monitoring</Text>
-        </View>
-        <View style={styles.navRight}>
-      <TouchableOpacity style={styles.avatar} onPress={toggleMenu} accessibilityRole="button" accessibilityLabel="User menu">
-            <Text style={styles.avatarText}>AK</Text>
-          </TouchableOpacity>
-          {menuOpen && (
-            <View style={styles.dropdown}>
-        <TouchableOpacity style={styles.dropdownItem} onPress={() => { /* future settings route */ }}>
-                <Text style={styles.dropdownText}>Settings</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dropdownItem} onPress={onLogout}>
-                <Text style={[styles.dropdownText, styles.logoutText]}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </View>
+    <View style={styles.page}>
       {mapFullscreen ? (
         <View style={styles.fullscreenContainer}> 
           <GISMap stations={stationData} fullscreen onToggleFullscreen={toggleMapFullscreen} />
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.contentWrapper, !isWide && styles.contentStack]}>        
-            <View style={[styles.column, styles.leftCol]}> 
-              <PlaceholderPanel title="Spatial Distribution (GIS)">
-                <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />
-              </PlaceholderPanel>
+        <ScrollView 
+          style={{ flex: 1 }} 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Map Section at Top */}
+          <View style={styles.mapSection}>
+            <View style={styles.mapHeader}>
+              <Text style={styles.mapTitle}>Spatial Distribution</Text>
+              <TouchableOpacity 
+                style={styles.fullscreenBtn} 
+                onPress={toggleMapFullscreen}
+              >
+                <Text style={styles.fullscreenIcon}>⛶</Text>
+              </TouchableOpacity>
             </View>
-            <View style={[styles.column, isWide ? styles.rightCol : null]}> 
-              <PlaceholderPanel title="Recent Alerts">
-                <Text style={styles.placeholderText}>• High drawdown at Well #A12{'\n'}• Rapid recharge anomaly at Site 7{'\n'}• Salinity threshold exceeded in Block 3</Text>
-              </PlaceholderPanel>
-              <PlaceholderPanel title="Data Quality Flags">
-                <Text style={styles.placeholderText}>[Quality table placeholder]</Text>
-              </PlaceholderPanel>
-              <PlaceholderPanel title="Planned Maintenance">
-                <Text style={styles.placeholderText}>[Schedule placeholder]</Text>
-              </PlaceholderPanel>
+            <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />
+          </View>
+
+          {/* Quick Metrics Section */}
+          <View style={styles.metricsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Key Metrics</Text>
+              <TouchableOpacity 
+                style={styles.districtSelector}
+                onPress={() => setShowDistrictPicker(true)}
+              >
+                <Text style={styles.districtText}>
+                  {selectedDistrict?.name || 'All Districts'}
+                </Text>
+                <Text style={styles.dropdownArrow}>▼</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.metricsGrid}>
+              <MetricCard 
+                icon="📊" 
+                title="OVERALL STATUS" 
+                value={`${metrics.overallStatus.status === 'GOOD' ? '🟢' : metrics.overallStatus.status === 'WARNING' ? '🟡' : '🔴'} ${metrics.overallStatus.status}`}
+                subtitle={`${metrics.overallStatus.safe} Safe • ${metrics.overallStatus.warning} Warning • ${metrics.overallStatus.critical} Critical`}
+                color={getStatusColor(metrics.overallStatus.status)}
+              />
+              <MetricCard 
+                icon="⚠️" 
+                title="CRITICAL DISTRICTS" 
+                value={`${metrics.criticalDistricts.count}/${metrics.criticalDistricts.total}`}
+                subtitle="Districts need attention"
+                color={metrics.criticalDistricts.count > 0 ? '#F44336' : '#4CAF50'}
+              />
+              <MetricCard 
+                icon="📈" 
+                title="TREND" 
+                value={`${metrics.trend.direction} ${metrics.trend.value.toFixed(1)}m`}
+                subtitle="Monthly change"
+                color={metrics.trend.direction === '↓' ? '#F44336' : metrics.trend.direction === '↑' ? '#FF9800' : '#4CAF50'}
+              />
+              <MetricCard 
+                icon="🏭" 
+                title="AVG DEPTH" 
+                value={`${metrics.avgDepth.value.toFixed(1)}m`}
+                subtitle={`Below ground level • ${metrics.avgDepth.status}`}
+                color={getStatusColor(metrics.avgDepth.status.toUpperCase())}
+              />
+              <MetricCard 
+                icon="📍" 
+                title="STATIONS" 
+                value={`${metrics.stations.active}/${metrics.stations.total}`}
+                subtitle={`${((metrics.stations.active / metrics.stations.total) * 100).toFixed(0)}% Active`}
+                color={metrics.stations.active / metrics.stations.total > 0.8 ? '#4CAF50' : '#F44336'}
+              />
+              <MetricCard 
+                icon="🚨" 
+                title="ANOMALIES" 
+                value={metrics.anomalies.count.toString()}
+                subtitle={metrics.anomalies.count > 0 ? 'Require investigation' : 'All systems normal'}
+                color={metrics.anomalies.count > 0 ? '#F44336' : '#4CAF50'}
+              />
+            </View>
+          </View>
+
+          {/* Alerts & Information */}
+          <View style={styles.alertsSection}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <View style={styles.alertsGrid}>
+              <AlertPanel title="🚨 Recent Alerts" urgent>
+                <Text style={styles.alertText}>• High drawdown at Well #A12</Text>
+                <Text style={styles.alertText}>• Rapid recharge anomaly at Site 7</Text>
+                <Text style={styles.alertText}>• Salinity threshold exceeded in Block 3</Text>
+              </AlertPanel>
+              <InfoPanel title="📊 Data Quality" status="good">
+                <Text style={styles.infoText}>✓ 94% data completeness</Text>
+                <Text style={styles.infoText}>✓ All sensors calibrated</Text>
+                <Text style={styles.infoText}>⚠ 2 stations offline</Text>
+              </InfoPanel>
+              <InfoPanel title="🔧 Maintenance" status="scheduled">
+                <Text style={styles.infoText}>• Site A12: Tomorrow 10:00 AM</Text>
+                <Text style={styles.infoText}>• Site B07: Next week</Text>
+                <Text style={styles.infoText}>• Calibration due: 3 stations</Text>
+              </InfoPanel>
             </View>
           </View>
         </ScrollView>
       )}
+      
+      {/* District Picker Modal */}
+      <Modal
+        visible={showDistrictPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDistrictPicker(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          onPress={() => setShowDistrictPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select District</Text>
+            <FlatList
+              data={[{ id: null, name: 'All Districts' }, ...districts]}
+              keyExtractor={(item) => item.id || 'all'}
+              renderItem={({ item }) => {
+                const isSelected = selectedDistrictId === item.id;
+                
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.districtOption,
+                      isSelected && styles.selectedOption
+                    ]}
+                    onPress={() => {
+                      setSelectedDistrictId(item.id);
+                      setShowDistrictPicker(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.districtOptionText,
+                      isSelected && styles.selectedOptionText
+                    ]}>
+                      {item.name}
+                    </Text>
+                    {isSelected && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
 
-function PlaceholderPanel({ title, children }: { title: string; children: React.ReactNode }) {
+function MetricCard({ icon, title, value, subtitle, color }: {
+  icon: string;
+  title: string;
+  value: string;
+  subtitle: string;
+  color: string;
+}) {
   return (
-    <View style={styles.panel}>
-      <Text style={styles.panelTitle}>{title}</Text>
-      <View style={styles.panelBody}>{children}</View>
+    <View style={[styles.metricCard, { borderLeftColor: color }]}>
+      <Text style={styles.metricIcon}>{icon}</Text>
+      <Text style={styles.metricTitle}>{title}</Text>
+      <Text style={styles.metricValue}>{value}</Text>
+      <Text style={styles.metricSubtitle}>{subtitle}</Text>
     </View>
   );
 }
 
-// Data moved to hooks & data modules.
+function AlertPanel({ title, children, urgent }: { 
+  title: string; 
+  children: React.ReactNode; 
+  urgent?: boolean;
+}) {
+  return (
+    <View style={[styles.alertPanel, urgent && styles.urgentPanel]}>
+      <Text style={[styles.alertTitle, urgent && styles.urgentTitle]}>{title}</Text>
+      <View style={styles.alertBody}>{children}</View>
+    </View>
+  );
+}
+
+function InfoPanel({ title, children, status }: { 
+  title: string; 
+  children: React.ReactNode; 
+  status: 'good' | 'warning' | 'scheduled';
+}) {
+  const statusColors = {
+    good: '#4CAF50',
+    warning: '#FF9800',
+    scheduled: '#2196F3'
+  };
+  
+  return (
+    <View style={[styles.infoPanel, { borderLeftColor: statusColors[status] }]}>
+      <Text style={styles.infoTitle}>{title}</Text>
+      <View style={styles.infoBody}>{children}</View>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#F5F5F5' },
-  scrollContent: { paddingBottom: 24 }, // contentContainerStyle for ScrollView
-  navBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E3E6E8', shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, elevation: 2 },
-  navLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  navRight: { flexDirection: 'row', alignItems: 'center', gap: 16, position: 'relative' },
-  logoBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#0066CC', alignItems: 'center', justifyContent: 'center' },
-  logoText: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
-  appTitle: { fontSize: 18, fontWeight: '700', color: '#004D99' },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#CCE6F9', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#B3D8F3' },
-  avatarText: { fontWeight: '600', color: '#004D99' },
-  dropdown: { position: 'absolute', top: 54, right: 0, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E0E4E7', paddingVertical: 4, minWidth: 160, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
-  dropdownItem: { paddingHorizontal: 14, paddingVertical: 10 },
-  dropdownText: { fontSize: 14, color: '#0066CC', fontWeight: '500' },
-  logoutText: { color: '#CC3300' },
-  contentWrapper: { flexGrow: 1, flexDirection: 'row', padding: 20, gap: 20 }, // Changed flex: 1 to flexGrow: 1 for ScrollView content
-  contentStack: { flexDirection: 'column' },
-  column: { flex: 1, gap: 20 },
-  leftCol: {},
-  rightCol: { maxWidth: 420 },
-  panel: { backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#E0E4E7', padding: 18, gap: 12 },
-  panelTitle: { fontSize: 15, fontWeight: '700', color: '#004D99' },
-  panelBody: { minHeight: 80 },
-  placeholderText: { fontSize: 13, color: '#5A6A78', lineHeight: 18 },
-  fullscreenContainer: { flex: 1, backgroundColor: '#000' },
+  page: { 
+    flex: 1, 
+    backgroundColor: '#F8FAFC' 
+  },
+  scrollContent: { 
+    paddingBottom: 100 
+  },
+  mapSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    margin: 16,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mapHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  mapTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  fullscreenBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+  },
+  fullscreenIcon: {
+    fontSize: 16,
+    color: '#64748B',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  districtSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 8,
+  },
+  districtText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1E293B',
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '80%',
+    maxHeight: '60%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  districtOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  selectedOption: {
+    backgroundColor: '#EFF6FF',
+  },
+  districtOptionText: {
+    fontSize: 16,
+    color: '#374151',
+  },
+  selectedOptionText: {
+    color: '#2563EB',
+    fontWeight: '500',
+  },
+  checkmark: {
+    fontSize: 16,
+    color: '#2563EB',
+    fontWeight: 'bold',
+  },
+  metricsSection: {
+    marginBottom: 8,
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  metricCard: {
+    flex: 1,
+    minWidth: '30%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    alignItems: 'center',
+    minHeight: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  metricIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  metricTitle: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  metricSubtitle: {
+    fontSize: 11,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+  alertsSection: {
+    marginBottom: 16,
+  },
+  alertsGrid: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  alertPanel: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  urgentPanel: {
+    borderLeftColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+  },
+  alertTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 12,
+  },
+  urgentTitle: {
+    color: '#DC2626',
+  },
+  alertBody: {
+    gap: 6,
+  },
+  alertText: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  infoPanel: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 12,
+  },
+  infoBody: {
+    gap: 6,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  fullscreenContainer: { 
+    flex: 1, 
+    backgroundColor: '#000' 
+  },
 });
 

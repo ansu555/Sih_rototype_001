@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, ScrollView } from 'react-native';
 import GISMap from '@/components/GISMap';
 import TrendChart from '@/components/TrendChart';
+import AlertsPanel from '@/components/AlertsPanel';
 import { useDashboard } from '@/hooks/useDashboard';
 
 export default function DashboardScreen() {
@@ -53,7 +54,8 @@ export default function DashboardScreen() {
             </View>
             <View style={[styles.column, isWide ? styles.rightCol : null]}> 
               <PlaceholderPanel title="Recent Alerts">
-                <Text style={styles.placeholderText}>• High drawdown at Well #A12{"\n"}• Rapid recharge anomaly at Site 7{ "\n"}• Salinity threshold exceeded in Block 3</Text>
+                {/* Replaced placeholder with live AlertsPanel */}
+                <AlertsPanel />
               </PlaceholderPanel>
               <PlaceholderPanel title="Data Quality Flags">
                 <Text style={styles.placeholderText}>[Quality table placeholder]</Text>

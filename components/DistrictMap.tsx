@@ -1,9 +1,10 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import MapView, { Polygon, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { StyleSheet, View, Text } from 'react-native';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
 import { WEST_BENGAL_POLYGONS } from '@/data/westBengalGeo';
+import StationModal from './StationModal';
 
 // Re-use existing styling palette from GISMap for coherence.
 
@@ -28,6 +29,8 @@ export default function DistrictMap() {
     if (!selected) return gwStations;
     return gwStations.filter(s => s.district === selected.name);
   }, [gwStations, selectedDistrictId, districts]);
+
+  const [selectedStation, setSelectedStation] = useState<any | null>(null);
 
   return (
     <View style={styles.wrapper}>
@@ -79,8 +82,7 @@ export default function DistrictMap() {
               key={s.stationCode} 
               coordinate={{ latitude: s.latitude, longitude: s.longitude }} 
               onPress={() => {
-                const status = s.latestDepth < 10 ? 'Safe' : s.latestDepth < 20 ? 'Semi-Critical' : 'Critical';
-                alert(`Station Details:\n\nName: ${s.name}\nStation Code: ${s.stationCode}\nDepth: ${s.latestDepth.toFixed(1)} m\nDistrict: ${s.district}\nStatus: ${status}\nCoordinates: ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}`);
+                setSelectedStation(s);
               }}
             >
               <View style={[styles.stationDot, { backgroundColor: getMarkerColor(s.latestDepth) }]} />
@@ -88,6 +90,7 @@ export default function DistrictMap() {
           );
         })}
       </MapView>
+      <StationModal visible={!!selectedStation} station={selectedStation} onClose={() => setSelectedStation(null)} />
       {selectedDistrict && (
         <View style={styles.fabBox} pointerEvents="none">
           <Text style={styles.fabTitle}>{selectedDistrict.name}</Text>

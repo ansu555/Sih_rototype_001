@@ -8,6 +8,7 @@ import { INTERNATIONAL_BORDER_LINES } from '../data/indiaInternationalBorder';
 import { useDistrictSelection } from '../contexts/DistrictSelectionContext';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
 import DataPanel from './DataPanel';
+import StationModal from './StationModal';
 
 interface Station { id: string; name: string; latitude: number; longitude: number; depthMeters: number; }
 
@@ -100,19 +101,15 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
 
   const handleZoomIn = () => {
     mapRef.current?.getCamera().then(camera => {
-      mapRef.current?.animateCamera({
-        center: camera.center,
-        zoom: Math.min(camera.zoom + 1, 20), // Max zoom level 20
-      });
+      const nextZoom = typeof camera.zoom === 'number' ? Math.min(camera.zoom + 1, 20) : 10;
+      mapRef.current?.animateCamera({ center: camera.center, zoom: nextZoom });
     });
   };
 
   const handleZoomOut = () => {
     mapRef.current?.getCamera().then(camera => {
-      mapRef.current?.animateCamera({
-        center: camera.center,
-        zoom: Math.max(camera.zoom - 1, 1), // Min zoom level 1
-      });
+      const nextZoom = typeof camera.zoom === 'number' ? Math.max(camera.zoom - 1, 1) : 8;
+      mapRef.current?.animateCamera({ center: camera.center, zoom: nextZoom });
     });
   };
 
@@ -131,6 +128,8 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
       }
     }
   };
+
+  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <View style={[styles.wrapper, fullscreen ? styles.fullscreenWrapper : { height }] }>
@@ -329,8 +328,28 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
           <Text style={styles.stationInfoCoords}>
             {selectedStation.latitude.toFixed(4)}, {selectedStation.longitude.toFixed(4)}
           </Text>
+          <TouchableOpacity style={styles.detailsBtn} onPress={() => setModalOpen(true)} accessibilityRole="button" accessibilityLabel="Open station details">
+            <Text style={styles.detailsBtnText}>Details</Text>
+          </TouchableOpacity>
         </View>
       )}
+      <StationModal
+        visible={modalOpen}
+        station={modalOpen && selectedStation ? {
+          stationCode: selectedStation.id,
+          name: selectedStation.name,
+          latitude: selectedStation.latitude,
+          longitude: selectedStation.longitude,
+          district: (selectedStation as any).district,
+          state: 'West Bengal',
+          latestDepth: selectedStation.depthMeters,
+          latestTime: new Date(),
+          acquisition: undefined,
+          status: undefined,
+          readingsCount: 1,
+        } : null}
+        onClose={() => setModalOpen(false)}
+      />
     </View>
   );
 }
@@ -373,4 +392,6 @@ const styles = StyleSheet.create({
   stationInfoDepth: { fontSize: 14, color: '#222', marginBottom: 4 },
   stationInfoStatus: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
   stationInfoCoords: { fontSize: 12, color: '#666' },
+  detailsBtn: { marginTop: 10, alignSelf: 'flex-start', backgroundColor: '#004D99', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  detailsBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
 });

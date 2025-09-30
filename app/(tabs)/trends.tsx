@@ -86,13 +86,13 @@ export default function TrendsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>📈 Groundwater Trends Analysis</Text>
+        <Text style={styles.headerTitle}>Groundwater Trends Analysis</Text>
         <View style={styles.headerControls}>
           <TouchableOpacity style={styles.headerBtn}>
-            <Text style={styles.headerBtnText}>Export 📊</Text>
+            <Text style={styles.headerBtnText}>Export</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn}>
-            <Text style={styles.headerBtnText}>Settings ⚙️</Text>
+            <Text style={styles.headerBtnText}>Settings</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -101,7 +101,7 @@ export default function TrendsScreen() {
         {/* Controls Section */}
         <View style={styles.controlsSection}>
           <View style={styles.controlRow}>
-            <Text style={styles.controlLabel}>District:</Text>
+            <Text style={styles.controlLabel}>District</Text>
             <TouchableOpacity 
               style={styles.dropdown}
               onPress={() => setShowDistrictPicker(true)}
@@ -111,11 +111,11 @@ export default function TrendsScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.compareBtn}>
-              <Text style={styles.compareBtnText}>Compare +</Text>
+              <Text style={styles.compareBtnText}>Compare</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.controlRow}>
-            <Text style={styles.controlLabel}>Date Range:</Text>
+            <Text style={styles.controlLabel}>Date Range</Text>
             <TouchableOpacity style={styles.dropdown}>
               <Text style={styles.dropdownText}>{dateRange} ▼</Text>
             </TouchableOpacity>
@@ -124,35 +124,35 @@ export default function TrendsScreen() {
 
         {/* Trend Summary */}
         <View style={styles.summarySection}>
-          <Text style={styles.sectionTitle}>📊 TREND SUMMARY</Text>
+          <Text style={styles.sectionTitle}>Trend Summary</Text>
           <View style={styles.summaryGrid}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Average:</Text>
-              <Text style={styles.summaryValue}>{trendSummary.average.toFixed(1)}m bgl</Text>
+              <Text style={styles.summaryLabel}>Average</Text>
+              <Text style={styles.summaryValue}>{trendSummary.average.toFixed(1)} m bgl</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Trend:</Text>
+              <Text style={styles.summaryLabel}>Trend</Text>
               <Text style={[styles.summaryValue, { color: trendSummary.trend < 0 ? '#F44336' : '#4CAF50' }]}>
-                {trendSummary.trend < 0 ? '↓' : '↑'} {Math.abs(trendSummary.trend).toFixed(1)}m/month
+                {trendSummary.trend.toFixed(1)} m/month
               </Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Seasonal:</Text>
-              <Text style={styles.summaryValue}>↑ {trendSummary.seasonal}</Text>
+              <Text style={styles.summaryLabel}>Seasonal Phase</Text>
+              <Text style={styles.summaryValue}>{trendSummary.seasonal}</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Forecast:</Text>
-              <Text style={styles.summaryValue}>{trendSummary.forecast.toFixed(1)}m (30 days)</Text>
+              <Text style={styles.summaryLabel}>Forecast (30d)</Text>
+              <Text style={styles.summaryValue}>{trendSummary.forecast.toFixed(1)} m</Text>
             </View>
           </View>
           <TouchableOpacity style={styles.detailsBtn}>
-            <Text style={styles.detailsBtnText}>View Details ▼</Text>
+            <Text style={styles.detailsBtnText}>Details</Text>
           </TouchableOpacity>
         </View>
 
         {/* Time Series Chart */}
         <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>📈 TIME SERIES CHART</Text>
+          <Text style={styles.sectionTitle}>Time Series</Text>
           <View style={styles.chartContainer}>
             <TrendChart />
             <View style={styles.chartLegend}>
@@ -184,11 +184,11 @@ export default function TrendsScreen() {
         {/* Station Details & Events */}
         <View style={[styles.bottomSection, isWide && styles.bottomSectionWide]}>
           <View style={styles.stationDetails}>
-            <Text style={styles.sectionTitle}>🔍 STATION DETAILS</Text>
+            <Text style={styles.sectionTitle}>Station Details</Text>
             
             {/* Station Selector Dropdown */}
             <View style={styles.stationSelector}>
-              <Text style={styles.selectorLabel}>Select Station:</Text>
+              <Text style={styles.selectorLabel}>Select Station</Text>
               <TouchableOpacity 
                 style={styles.stationDropdown}
                 onPress={() => setShowStationPicker(true)}
@@ -203,18 +203,18 @@ export default function TrendsScreen() {
               <View style={styles.stationInfo}>
                 <Text style={styles.stationName}>{selectedStation.name}</Text>
                 <Text style={styles.stationSubtext}>({selectedStation.stationCode})</Text>
-                <Text style={styles.stationDepth}>💧 {selectedStation.latestDepth.toFixed(2)}m</Text>
-                <Text style={styles.stationDate}>📅 {new Date(selectedStation.latestTime).toLocaleDateString()}</Text>
-                <Text style={styles.stationLocation}>🏷️ {selectedStation.district}</Text>
+                <Text style={styles.stationDepth}>{selectedStation.latestDepth.toFixed(2)} m</Text>
+                <Text style={styles.stationDate}>{new Date(selectedStation.latestTime).toLocaleDateString()}</Text>
+                <Text style={styles.stationLocation}>{selectedStation.district}</Text>
                 <Text style={styles.stationCount}>
-                  📊 {availableStations.length} stations in district
+                  {availableStations.length} stations in district
                 </Text>
               </View>
             )}
           </View>
 
           <View style={styles.eventsPanel}>
-            <Text style={styles.sectionTitle}>📋 EVENTS</Text>
+            <Text style={styles.sectionTitle}>Events</Text>
             <View style={styles.eventsList}>
               {events.map((event, index) => (
                 <TouchableOpacity key={index} style={styles.eventItem}>
@@ -326,7 +326,7 @@ export default function TrendsScreen() {
                         {item.stationCode}
                       </Text>
                       <Text style={styles.stationOptionDepth}>
-                        💧 {item.latestDepth.toFixed(2)}m bgl
+                        {item.latestDepth.toFixed(2)} m bgl
                       </Text>
                     </View>
                     {isSelected && (

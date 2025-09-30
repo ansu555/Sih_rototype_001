@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, ScrollView, Modal, FlatList } from 'react-native';
 import GISMap from '@/components/GISMap';
-import { useDashboard } from '@/hooks/useDashboard';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
+import { useDashboard } from '@/hooks/useDashboard';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 export default function DashboardScreen() {
   const { width } = useWindowDimensions();
-  const isWide = width >= 900;
+  // Responsive flag (reserved for future use) removed to avoid unused var warning
   const [mapFullscreen, setMapFullscreen] = useState(false);
   const [showDistrictPicker, setShowDistrictPicker] = useState(false);
   const toggleMapFullscreen = () => setMapFullscreen(f => !f);
-  const mapHeight = Math.min(Math.max(width * 0.55, 320), 540);
-  const { state: { menuOpen, stationData }, actions: { toggleMenu, onLogout } } = useDashboard();
+  // Enlarged map height for easier interaction
+  const mapHeight = Math.min(Math.max(width * 0.65, 380), 640);
+  const { state: { stationData } } = useDashboard();
   const { districts, selectedDistrictId, setSelectedDistrictId, selectedDistrict } = useDistrictSelection();
-  const { stations, refresh } = useGroundwater();
+  const { stations } = useGroundwater();
 
   const [metrics, setMetrics] = useState({
     overallStatus: { status: 'LOADING', safe: 0, warning: 0, critical: 0 },
@@ -24,14 +25,7 @@ export default function DashboardScreen() {
     stations: { active: 0, total: 0 },
     anomalies: { count: 0 }
   });
-
-  useEffect(() => {
-    if (stations && stations.length > 0) {
-      calculateMetrics();
-    }
-  }, [stations, selectedDistrictId]);
-
-  const calculateMetrics = () => {
+  const calculateMetrics = useCallback(() => {
     if (!stations || stations.length === 0) {
       console.log('No station data available');
       return;
@@ -119,7 +113,13 @@ export default function DashboardScreen() {
 
     console.log('New metrics:', newMetrics);
     setMetrics(newMetrics);
-  };
+  }, [stations, selectedDistrictId, districts]);
+
+  useEffect(() => {
+    if (stations && stations.length > 0) {
+      calculateMetrics();
+    }
+  }, [stations, selectedDistrictId, calculateMetrics]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -150,10 +150,12 @@ export default function DashboardScreen() {
                 style={styles.fullscreenBtn} 
                 onPress={toggleMapFullscreen}
               >
-                <Text style={styles.fullscreenIcon}>⛶</Text>
+                <Text style={styles.fullscreenIcon}>Full</Text>
               </TouchableOpacity>
             </View>
-            <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />
+            <View style={styles.mapBody}> 
+              <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />
+            </View>
           </View>
 
           {/* Quick Metrics Section */}
@@ -172,45 +174,39 @@ export default function DashboardScreen() {
             </View>
             <View style={styles.metricsGrid}>
               <MetricCard 
-                icon="📊" 
                 title="OVERALL STATUS" 
-                value={`${metrics.overallStatus.status === 'GOOD' ? '🟢' : metrics.overallStatus.status === 'WARNING' ? '🟡' : '🔴'} ${metrics.overallStatus.status}`}
-                subtitle={`${metrics.overallStatus.safe} Safe • ${metrics.overallStatus.warning} Warning • ${metrics.overallStatus.critical} Critical`}
+                value={`${metrics.overallStatus.status}`}
+                subtitle={`${metrics.overallStatus.safe} Safe  |  ${metrics.overallStatus.warning} Warning  |  ${metrics.overallStatus.critical} Critical`}
                 color={getStatusColor(metrics.overallStatus.status)}
               />
               <MetricCard 
-                icon="⚠️" 
                 title="CRITICAL DISTRICTS" 
                 value={`${metrics.criticalDistricts.count}/${metrics.criticalDistricts.total}`}
-                subtitle="Districts need attention"
+                subtitle="Districts needing attention"
                 color={metrics.criticalDistricts.count > 0 ? '#F44336' : '#4CAF50'}
               />
               <MetricCard 
-                icon="📈" 
                 title="TREND" 
-                value={`${metrics.trend.direction} ${metrics.trend.value.toFixed(1)}m`}
+                value={`${metrics.trend.value.toFixed(1)} m/mo`}
                 subtitle="Monthly change"
-                color={metrics.trend.direction === '↓' ? '#F44336' : metrics.trend.direction === '↑' ? '#FF9800' : '#4CAF50'}
+                color={metrics.trend.value > 0 ? '#F44336' : metrics.trend.value < 0 ? '#4CAF50' : '#FF9800'}
               />
               <MetricCard 
-                icon="🏭" 
                 title="AVG DEPTH" 
-                value={`${metrics.avgDepth.value.toFixed(1)}m`}
-                subtitle={`Below ground level • ${metrics.avgDepth.status}`}
+                value={`${metrics.avgDepth.value.toFixed(1)} m`}
+                subtitle={`Below ground • ${metrics.avgDepth.status}`}
                 color={getStatusColor(metrics.avgDepth.status.toUpperCase())}
               />
               <MetricCard 
-                icon="📍" 
                 title="STATIONS" 
                 value={`${metrics.stations.active}/${metrics.stations.total}`}
-                subtitle={`${((metrics.stations.active / metrics.stations.total) * 100).toFixed(0)}% Active`}
-                color={metrics.stations.active / metrics.stations.total > 0.8 ? '#4CAF50' : '#F44336'}
+                subtitle={`${((metrics.stations.active / Math.max(metrics.stations.total,1)) * 100).toFixed(0)}% Active`}
+                color={metrics.stations.active / Math.max(metrics.stations.total,1) > 0.8 ? '#4CAF50' : '#F44336'}
               />
               <MetricCard 
-                icon="🚨" 
                 title="ANOMALIES" 
                 value={metrics.anomalies.count.toString()}
-                subtitle={metrics.anomalies.count > 0 ? 'Require investigation' : 'All systems normal'}
+                subtitle={metrics.anomalies.count > 0 ? 'Require investigation' : 'Normal'}
                 color={metrics.anomalies.count > 0 ? '#F44336' : '#4CAF50'}
               />
             </View>
@@ -220,20 +216,20 @@ export default function DashboardScreen() {
           <View style={styles.alertsSection}>
             <Text style={styles.sectionTitle}>Recent Activity</Text>
             <View style={styles.alertsGrid}>
-              <AlertPanel title="🚨 Recent Alerts" urgent>
-                <Text style={styles.alertText}>• High drawdown at Well #A12</Text>
-                <Text style={styles.alertText}>• Rapid recharge anomaly at Site 7</Text>
-                <Text style={styles.alertText}>• Salinity threshold exceeded in Block 3</Text>
+              <AlertPanel title="Recent Alerts" urgent>
+                <Text style={styles.alertText}>High drawdown at Well A12</Text>
+                <Text style={styles.alertText}>Rapid recharge anomaly at Site 7</Text>
+                <Text style={styles.alertText}>Salinity threshold exceeded in Block 3</Text>
               </AlertPanel>
-              <InfoPanel title="📊 Data Quality" status="good">
-                <Text style={styles.infoText}>✓ 94% data completeness</Text>
-                <Text style={styles.infoText}>✓ All sensors calibrated</Text>
-                <Text style={styles.infoText}>⚠ 2 stations offline</Text>
+              <InfoPanel title="Data Quality" status="good">
+                <Text style={styles.infoText}>94% data completeness</Text>
+                <Text style={styles.infoText}>All sensors calibrated</Text>
+                <Text style={styles.infoText}>2 stations offline</Text>
               </InfoPanel>
-              <InfoPanel title="🔧 Maintenance" status="scheduled">
-                <Text style={styles.infoText}>• Site A12: Tomorrow 10:00 AM</Text>
-                <Text style={styles.infoText}>• Site B07: Next week</Text>
-                <Text style={styles.infoText}>• Calibration due: 3 stations</Text>
+              <InfoPanel title="Maintenance" status="scheduled">
+                <Text style={styles.infoText}>Site A12: Tomorrow 10:00</Text>
+                <Text style={styles.infoText}>Site B07: Next week</Text>
+                <Text style={styles.infoText}>Calibration due: 3 stations</Text>
               </InfoPanel>
             </View>
           </View>
@@ -290,8 +286,7 @@ export default function DashboardScreen() {
   );
 }
 
-function MetricCard({ icon, title, value, subtitle, color }: {
-  icon: string;
+function MetricCard({ title, value, subtitle, color }: {
   title: string;
   value: string;
   subtitle: string;
@@ -299,7 +294,6 @@ function MetricCard({ icon, title, value, subtitle, color }: {
 }) {
   return (
     <View style={[styles.metricCard, { borderLeftColor: color }]}>
-      <Text style={styles.metricIcon}>{icon}</Text>
       <Text style={styles.metricTitle}>{title}</Text>
       <Text style={styles.metricValue}>{value}</Text>
       <Text style={styles.metricSubtitle}>{subtitle}</Text>
@@ -352,17 +346,21 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     margin: 16,
     marginBottom: 8,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  mapBody: {
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   mapHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
@@ -372,15 +370,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
-  fullscreenBtn: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-  },
-  fullscreenIcon: {
-    fontSize: 16,
-    color: '#64748B',
-  },
+  fullscreenBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6, backgroundColor: '#F1F5F9' },
+  fullscreenIcon: { fontSize: 14, color: '#64748B', fontWeight: '500' },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
@@ -468,39 +459,32 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   metricCard: {
-    flex: 1,
-    minWidth: '30%',
     backgroundColor: '#FFFFFF',
+    padding: 14,
     borderRadius: 12,
-    padding: 16,
+    flex: 1,
+    minWidth: '46%',
     borderLeftWidth: 4,
-    alignItems: 'center',
-    minHeight: 120,
+    gap: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
-  },
-  metricIcon: {
-    fontSize: 24,
-    marginBottom: 8,
+    alignItems: 'center'
   },
   metricTitle: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   metricValue: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#1E293B',
     textAlign: 'center',
-    marginBottom: 4,
+    marginTop: 2,
   },
   metricSubtitle: {
     fontSize: 11,

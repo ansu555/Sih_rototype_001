@@ -1,14 +1,14 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, SplashScreen } from 'expo-router'; // Import SplashScreen
+import { SplashScreen, Stack } from 'expo-router'; // Import SplashScreen
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
 import { useEffect } from 'react'; // Import useEffect
+import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import AppHeader from '@/components/AppHeader';
 import { DistrictSelectionProvider } from '@/contexts/DistrictSelectionContext';
 import { GroundwaterProvider } from '@/contexts/GroundwaterContext';
-import AppHeader from '@/components/AppHeader';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

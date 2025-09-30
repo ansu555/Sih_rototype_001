@@ -1,33 +1,44 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export function AppHeader({ title = 'Groundwater App' }: { title?: string }) {
+function AppHeader({ title = 'Groundwater App' }: { title?: string }) {
   const theme = useColorScheme() ?? 'light';
 
   return (
-    <View style={[styles.header, theme === 'dark' ? styles.headerDark : styles.headerLight]}>
-      <Text style={[styles.title, theme === 'dark' ? styles.titleDark : styles.titleLight]}>{title}</Text>
-      <View style={styles.controls}>
-        <TouchableOpacity style={styles.btn} onPress={() => {/* TODO: wire export */}}>
-          <Text style={styles.btnText}>Export</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.btn} onPress={() => {/* TODO: open settings */}}>
-          <Text style={styles.btnText}>Settings</Text>
-        </TouchableOpacity>
+    <SafeAreaView
+      edges={['top']}
+      style={[
+        styles.header,
+        theme === 'dark' ? styles.headerDark : styles.headerLight,
+      ]}
+    >
+      <View style={styles.inner}>
+        <Text style={[styles.title, theme === 'dark' ? styles.titleDark : styles.titleLight]}>{title}</Text>
+        <View style={styles.controls}>
+          <TouchableOpacity style={styles.btn} onPress={() => {/* TODO: wire export */}}>
+            <Text style={styles.btnText}>Export</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.btn} onPress={() => {/* TODO: open settings */}}>
+            <Text style={styles.btnText}>Settings</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    height: 56,
+    borderBottomWidth: 1,
+  },
+  inner: {
+    height: 48,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottomWidth: 1,
   },
   headerLight: {
     backgroundColor: '#FFFFFF',

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions, Modal, FlatList } from 'react-native';
 import TrendChart from '@/components/TrendChart';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
+import type { GroundwaterStationLatest } from '@/data/groundwater';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 export default function TrendsScreen() {
   const { width } = useWindowDimensions();
@@ -10,12 +11,11 @@ export default function TrendsScreen() {
   const { districts, selectedDistrictId, setSelectedDistrictId, selectedDistrict } = useDistrictSelection();
   const { stations } = useGroundwater();
   
-  const [dateRange, setDateRange] = useState('Jan 2023 - Dec 2023');
+  // Date range is currently static placeholder
+  const dateRange = 'Jan 2023 - Dec 2023';
   const [zoomLevel, setZoomLevel] = useState('6M');
-  const [selectedStation, setSelectedStation] = useState(null);
   const [showStationPicker, setShowStationPicker] = useState(false);
   const [showDistrictPicker, setShowDistrictPicker] = useState(false);
-  const [availableStations, setAvailableStations] = useState([]);
   
   const [trendSummary, setTrendSummary] = useState({
     average: 0,
@@ -24,21 +24,10 @@ export default function TrendsScreen() {
     forecast: 0
   });
 
-  useEffect(() => {
-    calculateTrendSummary();
-    updateAvailableStations();
-  }, [selectedDistrictId, stations]);
+  const [selectedStation, setSelectedStation] = useState<GroundwaterStationLatest | null>(null);
+  const [availableStations, setAvailableStations] = useState<GroundwaterStationLatest[]>([]);
 
-  const getDistrictsWithData = () => {
-    // Get unique districts that have station data
-    const districtsWithData = [...new Set(stations.map(s => s.district))]
-      .map(districtName => districts.find(d => d.name === districtName))
-      .filter(Boolean); // Remove undefined values
-    
-    return districtsWithData;
-  };
-
-  const updateAvailableStations = () => {
+  const updateAvailableStations = useCallback(() => {
     const filteredStations = selectedDistrictId 
       ? stations.filter(s => {
           const districtObj = districts.find(d => d.id === selectedDistrictId);
@@ -50,9 +39,9 @@ export default function TrendsScreen() {
     if (filteredStations.length > 0 && !selectedStation) {
       setSelectedStation(filteredStations[0]);
     }
-  };
+  }, [selectedDistrictId, stations, districts, selectedStation]);
 
-  const calculateTrendSummary = () => {
+  const calculateTrendSummary = useCallback(() => {
     const filteredStations = selectedDistrictId 
       ? stations.filter(s => {
           const districtObj = districts.find(d => d.id === selectedDistrictId);
@@ -69,7 +58,23 @@ export default function TrendsScreen() {
         forecast: avgDepth + 0.5
       });
     }
+  }, [selectedDistrictId, stations, districts]);
+
+  useEffect(() => {
+    calculateTrendSummary();
+    updateAvailableStations();
+  }, [calculateTrendSummary, updateAvailableStations]);
+
+  const getDistrictsWithData = () => {
+    // Get unique districts that have station data
+    const districtsWithData = [...new Set(stations.map(s => s.district))]
+      .map(districtName => districts.find(d => d.name === districtName))
+      .filter(Boolean); // Remove undefined values
+    
+    return districtsWithData;
   };
+
+  // ...existing code...
 
   const events = [
     { type: 'Monsoon Peak', date: 'Jul 23', color: '#4CAF50' },
@@ -241,10 +246,10 @@ export default function TrendsScreen() {
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select District</Text>
-            <FlatList
-              data={[{ id: null, name: 'All Districts' }, ...getDistrictsWithData()]}
-              keyExtractor={(item) => item.id || 'all'}
-              renderItem={({ item }) => {
+                  <FlatList
+                    data={[{ id: null, name: 'All Districts' }, ...getDistrictsWithData()] as any}
+                    keyExtractor={(item) => String(item?.id ?? 'all')}
+                    renderItem={({ item }) => {
                 const isSelected = selectedDistrictId === item.id;
                 
                 return (
@@ -330,7 +335,7 @@ export default function TrendsScreen() {
                   </TouchableOpacity>
                 );
               }}
-              maxHeight={400}
+              style={{ maxHeight: 400 }}
             />
           </View>
         </TouchableOpacity>
@@ -402,10 +407,7 @@ const styles = StyleSheet.create({
     borderColor: '#D1D5DB',
     flex: 1,
   },
-  dropdownText: {
-    fontSize: 14,
-    color: '#374151',
-  },
+  // dropdownText moved to the station selector block later to avoid duplicate keys
   compareBtn: {
     backgroundColor: '#3B82F6',
     paddingHorizontal: 12,

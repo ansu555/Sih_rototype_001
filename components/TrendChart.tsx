@@ -1,17 +1,17 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  Dimensions, 
-  ScrollView, 
-  TouchableOpacity, 
-  StyleSheet,
-  Modal,
-  FlatList
-} from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
 import { GroundwaterReading } from '@/data/groundwater';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+    Dimensions,
+    FlatList,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import { LineChart } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -90,7 +90,9 @@ export default function TrendChart() {
         }
       });
     } catch (error) {
-      console.warn('Error loading groundwater data:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error loading groundwater data:', error);
+      }
     }
     
     return rawData;

@@ -100,7 +100,9 @@ export function buildGroundwaterData(): GroundwaterDataBundle {
     // Validate coordinates
     const validation = validateStationCoordinates(rec.latitude, rec.longitude, rec.district, true);
     if (!validation.isValid && validation.correctedLat && validation.correctedLng) {
-      console.warn(`Station ${rec.stationCode} coordinates corrected:`, validation.issues);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Station ${rec.stationCode} coordinates corrected:`, validation.issues);
+      }
       rec.latitude = validation.correctedLat;
       rec.longitude = validation.correctedLng;
     }

@@ -1,8 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap, GeoJSON } from 'react-leaflet';
-import wbDistricts from '../assets/data/wb_districts.geojson';
+import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, useMap } from 'react-leaflet';
+import { StyleSheet, View } from 'react-native';
+// Use the existing JSON district file shipped in assets.
+// The file is named `wb_districts.json` in the repository.
+// We keep the any cast because the file may not exactly match GeoJSON typing.
 import 'leaflet/dist/leaflet.css';
+import wbDistricts from '../assets/data/wb_districts.json';
 
 export type StationStatus = 'safe' | 'semi-critical' | 'critical';
 

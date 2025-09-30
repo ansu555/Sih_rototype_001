@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { useGroundwater } from '@/contexts/GroundwaterContext';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
+import { useGroundwater } from '@/contexts/GroundwaterContext';
+import { Picker } from '@react-native-picker/picker';
+import React, { useMemo, useState } from 'react';
+import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface DataPanelProps {
   visible: boolean;
@@ -160,8 +160,10 @@ export default function DataPanel({ visible, onClose, onStationSelect, selectedS
               <TouchableOpacity 
                 style={styles.dateBtn}
                 onPress={() => {
-                  // In a real app, you'd open a date picker here
-                  console.log('Open start date picker');
+                  // In a real app, you'd open a date picker here.
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('Open start date picker');
+                  }
                 }}
               >
                 <Text style={styles.dateBtnText}>
@@ -172,7 +174,9 @@ export default function DataPanel({ visible, onClose, onStationSelect, selectedS
               <TouchableOpacity 
                 style={styles.dateBtn}
                 onPress={() => {
-                  console.log('Open end date picker');
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('Open end date picker');
+                  }
                 }}
               >
                 <Text style={styles.dateBtnText}>

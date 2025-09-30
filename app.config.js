@@ -7,8 +7,10 @@ export default ({ config }) => {
   const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
 
   if (!googleMapsApiKey) {
-    // This warning will appear during the build process if the key is missing.
-    console.warn("Warning: GOOGLE_MAPS_API_KEY is not set in your .env file. Google Maps may not work correctly.");
+    // Warn only in development to avoid noisy output during CI/builds.
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("Warning: GOOGLE_MAPS_API_KEY is not set in your .env file. Google Maps may not work correctly.");
+    }
   }
 
   // Update the Android configuration

@@ -2,8 +2,10 @@ import TrendChart from '@/components/TrendChart';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
 import type { GroundwaterStationLatest } from '@/data/groundwater';
+import { buildStationsCSV } from '@/utils/csv';
+import * as FileSystem from 'expo-file-system';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { FlatList, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 export default function TrendsScreen() {
   const { width } = useWindowDimensions();
@@ -26,6 +28,49 @@ export default function TrendsScreen() {
 
   const [selectedStation, setSelectedStation] = useState<GroundwaterStationLatest | null>(null);
   const [availableStations, setAvailableStations] = useState<GroundwaterStationLatest[]>([]);
+  const [exporting, setExporting] = useState(false);
+
+  const exportDistrictCSV = useCallback(async () => {
+    if (exporting) return;
+    try {
+      setExporting(true);
+      const districtName = selectedDistrict?.name || 'All_Districts';
+      const stationsToExport = selectedDistrict?.name
+        ? stations.filter(s => s.district === selectedDistrict.name)
+        : stations;
+      if (!stationsToExport.length) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('No stations to export for selection');
+        }
+        return;
+      }
+      const csv = buildStationsCSV({
+        stations: stationsToExport,
+        meta: {
+          district: districtName,
+          stationCount: stationsToExport.length,
+          generatedAt: new Date().toISOString(),
+        }
+      });
+      const fileName = `groundwater_${districtName.replace(/\s+/g,'_').toLowerCase()}.csv`;
+      const fileUri = FileSystem.cacheDirectory + fileName;
+      await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
+      if (Platform.OS !== 'web') {
+        // Sharing not integrated; developer can open file manually from cache.
+        if (process.env.NODE_ENV === 'development') {
+          console.log('CSV saved to cache (sharing module not configured):', fileUri);
+        }
+      } else if (process.env.NODE_ENV === 'development') {
+        console.log('CSV export generated (web). Length:', csv.length);
+      }
+    } catch (e) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('CSV export failed', e);
+      }
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting, selectedDistrict, stations]);
 
   const updateAvailableStations = useCallback(() => {
     const filteredStations = selectedDistrictId 
@@ -88,8 +133,8 @@ export default function TrendsScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Groundwater Trends Analysis</Text>
         <View style={styles.headerControls}>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Text style={styles.headerBtnText}>Export</Text>
+          <TouchableOpacity style={[styles.headerBtn, exporting && { opacity: 0.6 }]} onPress={exportDistrictCSV} disabled={exporting}>
+            <Text style={styles.headerBtnText}>{exporting ? 'Exporting...' : 'Export CSV'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn}>
             <Text style={styles.headerBtnText}>Settings</Text>
@@ -351,7 +396,8 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     flexDirection: 'row',
@@ -379,12 +425,15 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    marginTop: 0,
   },
   controlsSection: {
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+    marginTop: 0,
   },
   controlRow: {
     flexDirection: 'row',
@@ -421,8 +470,10 @@ const styles = StyleSheet.create({
   },
   summarySection: {
     backgroundColor: '#FFFFFF',
-    margin: 16,
-    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 16,
+    padding: 14,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

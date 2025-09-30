@@ -8,6 +8,7 @@ import { useEffect } from 'react'; // Import useEffect
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { DistrictSelectionProvider } from '@/contexts/DistrictSelectionContext';
 import { GroundwaterProvider } from '@/contexts/GroundwaterContext';
+import AppHeader from '@/components/AppHeader';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -32,6 +33,7 @@ export default function RootLayout() {
     <GroundwaterProvider>
       <DistrictSelectionProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <AppHeader />
           <Stack
             screenOptions={{
               headerShown: false, // Hide header for all stack screens by default

@@ -88,11 +88,13 @@ export default function DataPanel({ visible, onClose, onStationSelect, selectedS
   return (
     <>
       {/* Backdrop */}
-      <TouchableOpacity 
-        style={styles.backdrop} 
-        activeOpacity={1} 
-        onPress={onClose}
-      />
+      <View style={styles.backdrop} pointerEvents={visible ? 'auto' : 'none'}>
+        <TouchableOpacity 
+          style={StyleSheet.absoluteFill} 
+          activeOpacity={1} 
+          onPress={onClose}
+        />
+      </View>
       
       {/* Sliding Panel */}
       <Animated.View 
@@ -108,7 +110,12 @@ export default function DataPanel({ visible, onClose, onStationSelect, selectedS
           </TouchableOpacity>
         </View>
         
-        <ScrollView style={styles.content}>
+        <ScrollView 
+          style={styles.content}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          nestedScrollEnabled={true}
+        >
           {/* Data Range */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Data Range</Text>
@@ -232,7 +239,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.3)',
-    zIndex: 100,
+    zIndex: 1000,
   },
   panel: {
     position: 'absolute',
@@ -241,7 +248,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 300,
     backgroundColor: '#fff',
-    zIndex: 101,
+    zIndex: 1001,
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 0 },
     shadowOpacity: 0.25,

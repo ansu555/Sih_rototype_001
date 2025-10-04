@@ -1,12 +1,12 @@
-import React, { useRef, useState, useMemo } from 'react';
-import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE, MapType } from 'react-native-maps';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { WEST_BENGAL_POLYGONS } from '../data/westBengalGeo';
-import { WEST_BENGAL_DISTRICTS } from '../data/districts';
-import { INDIA_OUTLINE_POLYGONS, INDIA_BORDER_POLYGONS } from '../data/indiaOutline';
-import { INTERNATIONAL_BORDER_LINES } from '../data/indiaInternationalBorder';
-import { useDistrictSelection } from '../contexts/DistrictSelectionContext';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
+import React, { useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MapView, { MapType, Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useDistrictSelection } from '../contexts/DistrictSelectionContext';
+import { WEST_BENGAL_DISTRICTS } from '../data/districts';
+import { INTERNATIONAL_BORDER_LINES } from '../data/indiaInternationalBorder';
+import { INDIA_BORDER_POLYGONS, INDIA_OUTLINE_POLYGONS } from '../data/indiaOutline';
+import { WEST_BENGAL_POLYGONS } from '../data/westBengalGeo';
 import DataPanel from './DataPanel';
 import StationModal from './StationModal';
 
@@ -273,11 +273,13 @@ export default function GISMap({ stations, height = 320, fullscreen = false, onT
           </View>
         </View>
       </View>
-      <View style={[styles.topBar, fullscreen && styles.topBarFullscreen]}> 
-        <TouchableOpacity onPress={onToggleFullscreen} style={styles.fullBtn} accessibilityRole="button" accessibilityLabel={fullscreen ? 'Exit fullscreen map' : 'Enter fullscreen map'}>
-          <Text style={styles.fullBtnText}>{fullscreen ? '×' : '⛶'}</Text>
-        </TouchableOpacity>
-      </View>
+      {fullscreen && (
+        <View style={[styles.topBar, fullscreen && styles.topBarFullscreen]}> 
+          <TouchableOpacity onPress={onToggleFullscreen} style={styles.fullBtn} accessibilityRole="button" accessibilityLabel="Exit fullscreen map">
+            <Text style={styles.fullBtnText}>×</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <View style={styles.zoomControls}>
         <TouchableOpacity style={styles.zoomButton} onPress={handleZoomIn}>
           <Text style={styles.zoomButtonText}>+</Text>

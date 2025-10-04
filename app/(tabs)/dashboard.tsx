@@ -146,12 +146,6 @@ export default function DashboardScreen() {
           <View style={styles.mapSection}>
             <View style={styles.mapHeader}>
               <Text style={styles.mapTitle}>Spatial Distribution</Text>
-              <TouchableOpacity 
-                style={styles.fullscreenBtn} 
-                onPress={toggleMapFullscreen}
-              >
-                <Text style={styles.fullscreenIcon}>Full</Text>
-              </TouchableOpacity>
             </View>
             <View style={styles.mapBody}> 
               <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />

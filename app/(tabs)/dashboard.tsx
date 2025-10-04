@@ -215,27 +215,7 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          {/* Alerts & Information */}
-          <View style={styles.alertsSection}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <View style={styles.alertsGrid}>
-              <AlertPanel title="Recent Alerts" urgent>
-                <Text style={styles.alertText}>High drawdown at Well A12</Text>
-                <Text style={styles.alertText}>Rapid recharge anomaly at Site 7</Text>
-                <Text style={styles.alertText}>Salinity threshold exceeded in Block 3</Text>
-              </AlertPanel>
-              <InfoPanel title="Data Quality" status="good">
-                <Text style={styles.infoText}>94% data completeness</Text>
-                <Text style={styles.infoText}>All sensors calibrated</Text>
-                <Text style={styles.infoText}>2 stations offline</Text>
-              </InfoPanel>
-              <InfoPanel title="Maintenance" status="scheduled">
-                <Text style={styles.infoText}>Site A12: Tomorrow 10:00</Text>
-                <Text style={styles.infoText}>Site B07: Next week</Text>
-                <Text style={styles.infoText}>Calibration due: 3 stations</Text>
-              </InfoPanel>
-            </View>
-          </View>
+          {/* Alerts & Information removed per request */}
         </ScrollView>
       )}
       
@@ -307,37 +287,7 @@ function MetricCard({ title, value, subtitle, color }: {
   );
 }
 
-function AlertPanel({ title, children, urgent }: { 
-  title: string; 
-  children: React.ReactNode; 
-  urgent?: boolean;
-}) {
-  return (
-    <View style={[styles.alertPanel, urgent && styles.urgentPanel]}>
-      <Text style={[styles.alertTitle, urgent && styles.urgentTitle]}>{title}</Text>
-      <View style={styles.alertBody}>{children}</View>
-    </View>
-  );
-}
-
-function InfoPanel({ title, children, status }: { 
-  title: string; 
-  children: React.ReactNode; 
-  status: 'good' | 'warning' | 'scheduled';
-}) {
-  const statusColors = {
-    good: '#4CAF50',
-    warning: '#FF9800',
-    scheduled: '#2196F3'
-  };
-  
-  return (
-    <View style={[styles.infoPanel, { borderLeftColor: statusColors[status] }]}>
-      <Text style={styles.infoTitle}>{title}</Text>
-      <View style={styles.infoBody}>{children}</View>
-    </View>
-  );
-}
+// AlertPanel and InfoPanel removed — Recent Activity moved out of dashboard
 
 const styles = StyleSheet.create({
   page: { 
@@ -509,69 +459,7 @@ const styles = StyleSheet.create({
   alertsSection: {
     marginBottom: 16,
   },
-  alertsGrid: {
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  alertPanel: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  urgentPanel: {
-    borderLeftColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
-  },
-  alertTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 12,
-  },
-  urgentTitle: {
-    color: '#DC2626',
-  },
-  alertBody: {
-    gap: 6,
-  },
-  alertText: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-  },
-  infoPanel: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 12,
-  },
-  infoBody: {
-    gap: 6,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-  },
+  // Alerts styles removed
   fullscreenContainer: { 
     flex: 1, 
     backgroundColor: '#000' 

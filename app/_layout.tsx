@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react'; // Import useEffect
 import 'react-native-reanimated';
 
-import AppHeader from '@/components/AppHeader';
 import { DistrictSelectionProvider } from '@/contexts/DistrictSelectionContext';
 import { GroundwaterProvider } from '@/contexts/GroundwaterContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -33,12 +32,14 @@ export default function RootLayout() {
     <GroundwaterProvider>
       <DistrictSelectionProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AppHeader />
           <Stack
+            initialRouteName="index"
             screenOptions={{
               headerShown: false, // Hide header for all stack screens by default
             }}
           >
+            {/* Login screen at root */}
+            <Stack.Screen name="index" />
             {/* The (tabs) layout will be the main navigation now */}
             <Stack.Screen name="(tabs)" /> 
             <Stack.Screen name="+not-found" />

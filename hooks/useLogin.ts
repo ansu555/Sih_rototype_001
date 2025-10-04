@@ -21,7 +21,8 @@ export function useLogin() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      router.replace('/dashboard');
+      // Navigate to the tabbed dashboard route explicitly
+      router.replace('/(tabs)/dashboard');
     }, 800);
   }, [loading, router]);
 

@@ -147,6 +147,8 @@ function correctStationFile(filePath, districtName, outputPath) {
 function correctAllStations() {
   console.log('🔧 Starting Coordinate Correction...\n');
   
+  // Define __dirname if not available (for ES modules or environments where it's undefined)
+  const __dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(require.main.filename);
   const dataDir = path.join(__dirname, '../assets/data/GWL');
   const backupDir = path.join(__dirname, '../assets/data/GWL_backup');
   const districts = ['Bankura', 'Barddhaman', 'Birbhum', 'Cooch Behar', 'Nadia'];

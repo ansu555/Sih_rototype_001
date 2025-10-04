@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
-import { GroundwaterStationLatest } from '@/data/groundwater';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
+import { GroundwaterStationLatest } from '@/data/groundwater';
+import React from 'react';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function StationModal({ visible, station, onClose }: Props) {
-  const { stations, districtSummaries } = useGroundwater();
+  const { districtSummaries } = useGroundwater();
   if (!station) return null;
 
   const ageDays = Math.max(0, Math.floor((Date.now() - station.latestTime.getTime()) / 86400000));

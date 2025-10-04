@@ -64,11 +64,24 @@ export interface DistrictGroundwaterSummary {
   maxDepth: number | null;
 }
 
+const DISTRICT_NAME_ALIASES: Record<string, string> = {
+  'BANKURA': 'Bankura',
+  'BARDDHAMAN': 'Purba Bardhaman',
+  'BURDWAN': 'Purba Bardhaman',
+  'BIRBHUM': 'Birbhum',
+  'COOCH BEHAR': 'Cooch Behar',
+  'NADIA': 'Nadia',
+};
+
 // Utility to convert dataset district value (e.g., 'BANKURA') to 'Bankura'
 function normalizeDistrictName(name: string): string {
   if (!name) return name;
-  const lower = name.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
+  const trimmed = name.trim();
+  const alias = DISTRICT_NAME_ALIASES[trimmed.toUpperCase()];
+  if (alias) return alias;
+  return trimmed
+    .toLowerCase()
+    .replace(/\b([a-z])/g, match => match.toUpperCase());
 }
 
 function toDate(t: GroundwaterReading['dataTime']): Date {

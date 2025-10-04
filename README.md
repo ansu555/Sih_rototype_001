@@ -81,3 +81,4 @@ Utilities:
 * Context auto-refreshes on screen focus.
 
 If file is empty the UI shows helper messages instead of borders.
+.

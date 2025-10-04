@@ -1,6 +1,6 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
-import { useRouter } from 'expo-router';
 
 export function useLogin() {
   const [username, setUsername] = useState('');

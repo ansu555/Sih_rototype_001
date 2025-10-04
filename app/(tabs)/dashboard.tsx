@@ -298,9 +298,11 @@ function MetricCard({ title, value, subtitle, color }: {
   return (
     <View style={styles.metricItem}>
       <View style={[styles.metricIndicator, { backgroundColor: color }]} />
-      <Text style={styles.metricTitle}>{title}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
-      <Text style={styles.metricSubtitle}>{subtitle}</Text>
+      <View style={styles.metricContent}>
+        <Text style={styles.metricTitle}>{title}</Text>
+        <Text style={styles.metricValue}>{value}</Text>
+        <Text style={styles.metricSubtitle}>{subtitle}</Text>
+      </View>
     </View>
   );
 }
@@ -475,13 +477,16 @@ const styles = StyleSheet.create({
   metricItem: {
     flex: 1,
     minWidth: '45%',
-    gap: 6,
+    flexDirection: 'row',
+    gap: 10,
   },
   metricIndicator: {
     width: 4,
-    height: 24,
     borderRadius: 2,
-    marginBottom: 4,
+  },
+  metricContent: {
+    flex: 1,
+    gap: 6,
   },
   metricTitle: {
     fontSize: 11,

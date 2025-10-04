@@ -172,43 +172,46 @@ export default function DashboardScreen() {
                 <Text style={styles.dropdownArrow}>▼</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.metricsGrid}>
-              <MetricCard 
-                title="OVERALL STATUS" 
-                value={`${metrics.overallStatus.status}`}
-                subtitle={`${metrics.overallStatus.safe} Safe  |  ${metrics.overallStatus.warning} Warning  |  ${metrics.overallStatus.critical} Critical`}
-                color={getStatusColor(metrics.overallStatus.status)}
-              />
-              <MetricCard 
-                title="CRITICAL DISTRICTS" 
-                value={`${metrics.criticalDistricts.count}/${metrics.criticalDistricts.total}`}
-                subtitle="Districts needing attention"
-                color={metrics.criticalDistricts.count > 0 ? '#F44336' : '#4CAF50'}
-              />
-              <MetricCard 
-                title="TREND" 
-                value={`${metrics.trend.value.toFixed(1)} m/mo`}
-                subtitle="Monthly change"
-                color={metrics.trend.value > 0 ? '#F44336' : metrics.trend.value < 0 ? '#4CAF50' : '#FF9800'}
-              />
-              <MetricCard 
-                title="AVG DEPTH" 
-                value={`${metrics.avgDepth.value.toFixed(1)} m`}
-                subtitle={`Below ground • ${metrics.avgDepth.status}`}
-                color={getStatusColor(metrics.avgDepth.status.toUpperCase())}
-              />
-              <MetricCard 
-                title="STATIONS" 
-                value={`${metrics.stations.active}/${metrics.stations.total}`}
-                subtitle={`${((metrics.stations.active / Math.max(metrics.stations.total,1)) * 100).toFixed(0)}% Active`}
-                color={metrics.stations.active / Math.max(metrics.stations.total,1) > 0.8 ? '#4CAF50' : '#F44336'}
-              />
-              <MetricCard 
-                title="ANOMALIES" 
-                value={metrics.anomalies.count.toString()}
-                subtitle={metrics.anomalies.count > 0 ? 'Require investigation' : 'Normal'}
-                color={metrics.anomalies.count > 0 ? '#F44336' : '#4CAF50'}
-              />
+            {/* Unified Metrics Card */}
+            <View style={styles.metricsCard}>
+              <View style={styles.metricsGrid}>
+                <MetricCard 
+                  title="OVERALL STATUS" 
+                  value={`${metrics.overallStatus.status}`}
+                  subtitle={`${metrics.overallStatus.safe} Safe  |  ${metrics.overallStatus.warning} Warning  |  ${metrics.overallStatus.critical} Critical`}
+                  color={getStatusColor(metrics.overallStatus.status)}
+                />
+                <MetricCard 
+                  title="CRITICAL DISTRICTS" 
+                  value={`${metrics.criticalDistricts.count}/${metrics.criticalDistricts.total}`}
+                  subtitle="Districts needing attention"
+                  color={metrics.criticalDistricts.count > 0 ? '#F44336' : '#4CAF50'}
+                />
+                <MetricCard 
+                  title="TREND" 
+                  value={`${metrics.trend.value.toFixed(1)} m/mo`}
+                  subtitle="Monthly change"
+                  color={metrics.trend.value > 0 ? '#F44336' : metrics.trend.value < 0 ? '#4CAF50' : '#FF9800'}
+                />
+                <MetricCard 
+                  title="AVG DEPTH" 
+                  value={`${metrics.avgDepth.value.toFixed(1)} m`}
+                  subtitle={`Below ground • ${metrics.avgDepth.status}`}
+                  color={getStatusColor(metrics.avgDepth.status.toUpperCase())}
+                />
+                <MetricCard 
+                  title="STATIONS" 
+                  value={`${metrics.stations.active}/${metrics.stations.total}`}
+                  subtitle={`${((metrics.stations.active / Math.max(metrics.stations.total,1)) * 100).toFixed(0)}% Active`}
+                  color={metrics.stations.active / Math.max(metrics.stations.total,1) > 0.8 ? '#4CAF50' : '#F44336'}
+                />
+                <MetricCard 
+                  title="ANOMALIES" 
+                  value={metrics.anomalies.count.toString()}
+                  subtitle={metrics.anomalies.count > 0 ? 'Require investigation' : 'Normal'}
+                  color={metrics.anomalies.count > 0 ? '#F44336' : '#4CAF50'}
+                />
+              </View>
             </View>
           </View>
 
@@ -293,7 +296,8 @@ function MetricCard({ title, value, subtitle, color }: {
   color: string;
 }) {
   return (
-    <View style={[styles.metricCard, { borderLeftColor: color }]}>
+    <View style={styles.metricItem}>
+      <View style={[styles.metricIndicator, { backgroundColor: color }]} />
       <Text style={styles.metricTitle}>{title}</Text>
       <Text style={styles.metricValue}>{value}</Text>
       <Text style={styles.metricSubtitle}>{subtitle}</Text>
@@ -452,45 +456,50 @@ const styles = StyleSheet.create({
   metricsSection: {
     marginBottom: 8,
   },
+  metricsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginHorizontal: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    gap: 12,
+    gap: 16,
   },
-  metricCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 14,
-    borderRadius: 12,
+  metricItem: {
     flex: 1,
-    minWidth: '46%',
-    borderLeftWidth: 4,
-    gap: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    alignItems: 'center'
+    minWidth: '45%',
+    gap: 6,
+  },
+  metricIndicator: {
+    width: 4,
+    height: 24,
+    borderRadius: 2,
+    marginBottom: 4,
   },
   metricTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#64748B',
-    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   metricValue: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#1E293B',
-    textAlign: 'center',
     marginTop: 2,
   },
   metricSubtitle: {
     fontSize: 11,
     color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 14,
+    lineHeight: 16,
   },
   alertsSection: {
     marginBottom: 16,

@@ -1,20 +1,15 @@
-import AppHeader from '@/components/AppHeader';
-import FontAwesome from '@expo/vector-icons/FontAwesome'; // Or your preferred icon library
 import { Tabs } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome'; // Or your preferred icon library
 
 export default function TabLayout() {
   return (
-    <View style={styles.container}>
-      <AppHeader />
-      <Tabs 
-        initialRouteName="dashboard"
-        screenOptions={({ route }) => ({
-          tabBarActiveTintColor: '#004D99', // Example active color
-          tabBarInactiveTintColor: 'gray',
-          headerShown: false, // Hide headers to avoid double headers
-        })}
-      >
+    <Tabs 
+      screenOptions={({ route }) => ({
+        tabBarActiveTintColor: '#004D99', // Example active color
+        tabBarInactiveTintColor: 'gray',
+        // headerShown: false, // Uncomment if you want to hide headers for all tab screens by default
+      })}
+    >
       <Tabs.Screen
         name="dashboard" // This will look for app/(tabs)/dashboard.tsx
         options={{
@@ -39,20 +34,6 @@ export default function TabLayout() {
           // Add headerShown: false if this screen shouldn't have a header
         }}
       />
-      {/* Hide the default index tab */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          href: null, // This hides the tab from the tab bar
-        }}
-      />
     </Tabs>
-    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

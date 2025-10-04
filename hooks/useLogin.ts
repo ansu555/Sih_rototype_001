@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export function useLogin() {
   const [username, setUsername] = useState('');
@@ -21,8 +21,7 @@ export function useLogin() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      // Navigate to the tabbed dashboard route explicitly
-      router.replace('/(tabs)/dashboard');
+      router.replace('/dashboard');
     }, 800);
   }, [loading, router]);
 

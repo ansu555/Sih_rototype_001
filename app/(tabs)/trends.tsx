@@ -2,10 +2,8 @@ import TrendChart from '@/components/TrendChart';
 import { useDistrictSelection } from '@/contexts/DistrictSelectionContext';
 import { useGroundwater } from '@/contexts/GroundwaterContext';
 import type { GroundwaterStationLatest } from '@/data/groundwater';
-import { buildStationsCSV } from '@/utils/csv';
-import * as FileSystem from 'expo-file-system';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 export default function TrendsScreen() {
   const { width } = useWindowDimensions();
@@ -28,49 +26,6 @@ export default function TrendsScreen() {
 
   const [selectedStation, setSelectedStation] = useState<GroundwaterStationLatest | null>(null);
   const [availableStations, setAvailableStations] = useState<GroundwaterStationLatest[]>([]);
-  const [exporting, setExporting] = useState(false);
-
-  const exportDistrictCSV = useCallback(async () => {
-    if (exporting) return;
-    try {
-      setExporting(true);
-      const districtName = selectedDistrict?.name || 'All_Districts';
-      const stationsToExport = selectedDistrict?.name
-        ? stations.filter(s => s.district === selectedDistrict.name)
-        : stations;
-      if (!stationsToExport.length) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('No stations to export for selection');
-        }
-        return;
-      }
-      const csv = buildStationsCSV({
-        stations: stationsToExport,
-        meta: {
-          district: districtName,
-          stationCount: stationsToExport.length,
-          generatedAt: new Date().toISOString(),
-        }
-      });
-      const fileName = `groundwater_${districtName.replace(/\s+/g,'_').toLowerCase()}.csv`;
-      const fileUri = FileSystem.cacheDirectory + fileName;
-      await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
-      if (Platform.OS !== 'web') {
-        // Sharing not integrated; developer can open file manually from cache.
-        if (process.env.NODE_ENV === 'development') {
-          console.log('CSV saved to cache (sharing module not configured):', fileUri);
-        }
-      } else if (process.env.NODE_ENV === 'development') {
-        console.log('CSV export generated (web). Length:', csv.length);
-      }
-    } catch (e) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('CSV export failed', e);
-      }
-    } finally {
-      setExporting(false);
-    }
-  }, [exporting, selectedDistrict, stations]);
 
   const updateAvailableStations = useCallback(() => {
     const filteredStations = selectedDistrictId 
@@ -131,13 +86,13 @@ export default function TrendsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Groundwater Trends Analysis</Text>
+        <Text style={styles.headerTitle}>📈 Groundwater Trends Analysis</Text>
         <View style={styles.headerControls}>
-          <TouchableOpacity style={[styles.headerBtn, exporting && { opacity: 0.6 }]} onPress={exportDistrictCSV} disabled={exporting}>
-            <Text style={styles.headerBtnText}>{exporting ? 'Exporting...' : 'Export CSV'}</Text>
+          <TouchableOpacity style={styles.headerBtn}>
+            <Text style={styles.headerBtnText}>Export 📊</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn}>
-            <Text style={styles.headerBtnText}>Settings</Text>
+            <Text style={styles.headerBtnText}>Settings ⚙️</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -146,7 +101,7 @@ export default function TrendsScreen() {
         {/* Controls Section */}
         <View style={styles.controlsSection}>
           <View style={styles.controlRow}>
-            <Text style={styles.controlLabel}>District</Text>
+            <Text style={styles.controlLabel}>District:</Text>
             <TouchableOpacity 
               style={styles.dropdown}
               onPress={() => setShowDistrictPicker(true)}
@@ -156,11 +111,11 @@ export default function TrendsScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.compareBtn}>
-              <Text style={styles.compareBtnText}>Compare</Text>
+              <Text style={styles.compareBtnText}>Compare +</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.controlRow}>
-            <Text style={styles.controlLabel}>Date Range</Text>
+            <Text style={styles.controlLabel}>Date Range:</Text>
             <TouchableOpacity style={styles.dropdown}>
               <Text style={styles.dropdownText}>{dateRange} ▼</Text>
             </TouchableOpacity>
@@ -169,35 +124,35 @@ export default function TrendsScreen() {
 
         {/* Trend Summary */}
         <View style={styles.summarySection}>
-          <Text style={styles.sectionTitle}>Trend Summary</Text>
+          <Text style={styles.sectionTitle}>📊 TREND SUMMARY</Text>
           <View style={styles.summaryGrid}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Average</Text>
-              <Text style={styles.summaryValue}>{trendSummary.average.toFixed(1)} m bgl</Text>
+              <Text style={styles.summaryLabel}>Average:</Text>
+              <Text style={styles.summaryValue}>{trendSummary.average.toFixed(1)}m bgl</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Trend</Text>
+              <Text style={styles.summaryLabel}>Trend:</Text>
               <Text style={[styles.summaryValue, { color: trendSummary.trend < 0 ? '#F44336' : '#4CAF50' }]}>
-                {trendSummary.trend.toFixed(1)} m/month
+                {trendSummary.trend < 0 ? '↓' : '↑'} {Math.abs(trendSummary.trend).toFixed(1)}m/month
               </Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Seasonal Phase</Text>
-              <Text style={styles.summaryValue}>{trendSummary.seasonal}</Text>
+              <Text style={styles.summaryLabel}>Seasonal:</Text>
+              <Text style={styles.summaryValue}>↑ {trendSummary.seasonal}</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Forecast (30d)</Text>
-              <Text style={styles.summaryValue}>{trendSummary.forecast.toFixed(1)} m</Text>
+              <Text style={styles.summaryLabel}>Forecast:</Text>
+              <Text style={styles.summaryValue}>{trendSummary.forecast.toFixed(1)}m (30 days)</Text>
             </View>
           </View>
           <TouchableOpacity style={styles.detailsBtn}>
-            <Text style={styles.detailsBtnText}>Details</Text>
+            <Text style={styles.detailsBtnText}>View Details ▼</Text>
           </TouchableOpacity>
         </View>
 
         {/* Time Series Chart */}
         <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Time Series</Text>
+          <Text style={styles.sectionTitle}>📈 TIME SERIES CHART</Text>
           <View style={styles.chartContainer}>
             <TrendChart />
             <View style={styles.chartLegend}>
@@ -229,11 +184,11 @@ export default function TrendsScreen() {
         {/* Station Details & Events */}
         <View style={[styles.bottomSection, isWide && styles.bottomSectionWide]}>
           <View style={styles.stationDetails}>
-            <Text style={styles.sectionTitle}>Station Details</Text>
+            <Text style={styles.sectionTitle}>🔍 STATION DETAILS</Text>
             
             {/* Station Selector Dropdown */}
             <View style={styles.stationSelector}>
-              <Text style={styles.selectorLabel}>Select Station</Text>
+              <Text style={styles.selectorLabel}>Select Station:</Text>
               <TouchableOpacity 
                 style={styles.stationDropdown}
                 onPress={() => setShowStationPicker(true)}
@@ -248,18 +203,18 @@ export default function TrendsScreen() {
               <View style={styles.stationInfo}>
                 <Text style={styles.stationName}>{selectedStation.name}</Text>
                 <Text style={styles.stationSubtext}>({selectedStation.stationCode})</Text>
-                <Text style={styles.stationDepth}>{selectedStation.latestDepth.toFixed(2)} m</Text>
-                <Text style={styles.stationDate}>{new Date(selectedStation.latestTime).toLocaleDateString()}</Text>
-                <Text style={styles.stationLocation}>{selectedStation.district}</Text>
+                <Text style={styles.stationDepth}>💧 {selectedStation.latestDepth.toFixed(2)}m</Text>
+                <Text style={styles.stationDate}>📅 {new Date(selectedStation.latestTime).toLocaleDateString()}</Text>
+                <Text style={styles.stationLocation}>🏷️ {selectedStation.district}</Text>
                 <Text style={styles.stationCount}>
-                  {availableStations.length} stations in district
+                  📊 {availableStations.length} stations in district
                 </Text>
               </View>
             )}
           </View>
 
           <View style={styles.eventsPanel}>
-            <Text style={styles.sectionTitle}>Events</Text>
+            <Text style={styles.sectionTitle}>📋 EVENTS</Text>
             <View style={styles.eventsList}>
               {events.map((event, index) => (
                 <TouchableOpacity key={index} style={styles.eventItem}>
@@ -371,7 +326,7 @@ export default function TrendsScreen() {
                         {item.stationCode}
                       </Text>
                       <Text style={styles.stationOptionDepth}>
-                        {item.latestDepth.toFixed(2)} m bgl
+                        💧 {item.latestDepth.toFixed(2)}m bgl
                       </Text>
                     </View>
                     {isSelected && (
@@ -396,8 +351,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     flexDirection: 'row',
@@ -425,15 +379,12 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginTop: 0,
   },
   controlsSection: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
-    marginTop: 0,
   },
   controlRow: {
     flexDirection: 'row',
@@ -470,10 +421,8 @@ const styles = StyleSheet.create({
   },
   summarySection: {
     backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 16,
-    padding: 14,
+    margin: 16,
+    padding: 16,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

@@ -1,5 +1,5 @@
-import { Tabs } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome'; // Or your preferred icon library
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
   return (
@@ -21,9 +21,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="trends" // This will look for app/(tabs)/trends.tsx
         options={{
-          title: 'Trends',
+          title: 'Trends Analysis',
           tabBarIcon: ({ color, size }) => <FontAwesome name="line-chart" size={size} color={color} />,
-          // Add headerShown: false if this screen shouldn't have a header
+          headerShown: false,
         }}
       />
       <Tabs.Screen

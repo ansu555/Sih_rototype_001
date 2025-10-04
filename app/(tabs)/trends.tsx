@@ -85,7 +85,7 @@ export default function TrendsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <Text style={styles.headerTitle}>📈 Groundwater Trends Analysis</Text>
         <View style={styles.headerControls}>
           <TouchableOpacity style={styles.headerBtn}>
@@ -95,7 +95,7 @@ export default function TrendsScreen() {
             <Text style={styles.headerBtnText}>Settings ⚙️</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </View> */}
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Controls Section */}

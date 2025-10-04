@@ -146,6 +146,14 @@ export default function DashboardScreen() {
           <View style={styles.mapSection}>
             <View style={styles.mapHeader}>
               <Text style={styles.mapTitle}>Spatial Distribution</Text>
+              <TouchableOpacity 
+                style={styles.fullscreenBtn}
+                onPress={toggleMapFullscreen}
+                accessibilityRole="button"
+                accessibilityLabel="View map in fullscreen"
+              >
+                <Text style={styles.fullscreenBtnText}>⛶</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.mapBody}> 
               <GISMap stations={stationData} height={mapHeight} onToggleFullscreen={toggleMapFullscreen} />
@@ -321,6 +329,7 @@ const styles = StyleSheet.create({
     color: '#1E293B',
   },
   fullscreenBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6, backgroundColor: '#F1F5F9' },
+  fullscreenBtnText: { fontSize: 16, color: '#64748B', fontWeight: '500' },
   fullscreenIcon: { fontSize: 14, color: '#64748B', fontWeight: '500' },
   sectionTitle: {
     fontSize: 20,
